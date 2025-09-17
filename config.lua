@@ -18,8 +18,17 @@ Config.RockRewardAmount = { min = 1, max = 3 } -- Amount of rocks rewarded per s
 Config.ShinyOre = {
     item = 'shinyore',
     chancePerHit = 20, -- One in X chance to find a dirty shiny ore while mining (set to 0 to disable)
+    amount = { min = 1, max = 1 }, -- Amount of shiny ore rewarded when the chance succeeds
     metadata = nil, -- Optional metadata table to attach to the item when rewarded
     foundMessage = nil, -- Override to customise the shiny ore found notification (uses locale when nil)
+}
+
+Config.Pyrite = {
+    item = 'pyrite', -- Secondary mineral that can be found while mining
+    chance = 35, -- One in X chance to uncover pyrite alongside rocks (set to 0 to disable)
+    amount = { min = 1, max = 2 }, -- Amount of pyrite rewarded when successful
+    metadata = nil, -- Optional metadata table to attach to the pyrite item
+    notify = nil, -- Custom notification message (uses locale when nil, supports %d amount and %s label)
 }
 
 Config.WaterBodies = {
@@ -70,16 +79,16 @@ Config.Washing = {
     duration = 7000, -- Duration in milliseconds for washing a shiny ore
     countdownLabel = nil, -- Override to customise the washing countdown label (uses locale when nil)
     gems = {
-        { item = 'diamond', chance = 5 },
-        { item = 'ruby', chance = 10 },
-        { item = 'emerald', chance = 10 },
-        { item = 'sapphire', chance = 10 },
-        { item = 'opal', chance = 15 },
-        { item = 'topaz', chance = 15 },
-        { item = 'garnet', chance = 10 },
-        { item = 'amethyst', chance = 10 },
-        { item = 'jade', chance = 10 },
-        { item = 'pearl', chance = 5 },
+        { item = 'diamond', chance = 5, amount = { min = 1, max = 1 } },
+        { item = 'ruby', chance = 10, amount = { min = 1, max = 2 } },
+        { item = 'emerald', chance = 10, amount = { min = 1, max = 2 } },
+        { item = 'sapphire', chance = 10, amount = { min = 1, max = 2 } },
+        { item = 'opal', chance = 15, amount = { min = 1, max = 3 } },
+        { item = 'topaz', chance = 15, amount = { min = 1, max = 3 } },
+        { item = 'garnet', chance = 10, amount = { min = 1, max = 2 } },
+        { item = 'amethyst', chance = 10, amount = { min = 1, max = 2 } },
+        { item = 'jade', chance = 10, amount = { min = 1, max = 2 } },
+        { item = 'pearl', chance = 5, amount = { min = 1, max = 1 } },
     }
 }
 
@@ -95,84 +104,85 @@ Config.IceDrill = {
     durability = 100, -- How many times the drill can be used before breaking (set to 0 for infinite)
     durabilityLoss = 3, -- Durability removed every time the drill is used
     brokenMessage = nil, -- Override to customise the drill broken message (uses locale when nil)
+    toolItem = 'drill', -- Optional inventory item required to operate the drill (set to false/nil to disable)
+    toolDurability = 60, -- How many uses the drill tool has before breaking (set to 0 for infinite)
+    toolDurabilityLoss = 1, -- Durability removed from the drill tool on every use
+    toolBrokenMessage = nil, -- Override to customise the drill tool break message (uses locale when nil)
+    replacementItem = 'broken_drill', -- Item that replaces the drill tool when it breaks (set to false/nil to disable)
+    replacementMetadata = nil, -- Optional metadata table to attach to the replacement item
+    replacementNotify = nil, -- Custom notification message for receiving the replacement item (uses locale when nil)
     shinyOre = {
         item = 'shinyore', -- Bonus reward item dropped while drilling
         chance = 25, -- One in X chance to find a shiny ore (set to 0 to disable)
-        amount = { min = 1, max = 1 }, -- Amount of shiny ore rewarded when successful
+        amount = { min = 1, max = 2 }, -- Amount of shiny ore rewarded when successful
         metadata = nil, -- Optional metadata table for shiny ore rewards
-        notify = nil, -- Custom notification message (uses locale when nil)
+        notify = nil, -- Custom notification message (uses locale when nil, supports %d amount and %s label)
     },
     fish = {
         chance = 18, -- One in X chance to hook a fish while drilling (set to 0 to disable)
         amount = { min = 1, max = 1 }, -- Default fish item amount
-        notify = nil, -- Custom notification message (uses locale when nil)
+        notify = nil, -- Custom notification message (uses locale when nil, supports %d amount and %s label)
         waters = {
             lake = {
-                { item = 'provision_fish_bluegill', label = 'Bluegill (Small)', amount = 1 },
-                { item = 'provision_fish_bluegill', label = 'Bluegill (Medium)', amount = 1 },
-                { item = 'provision_fish_largemouth_bass', label = 'Largemouth Bass (Medium)', amount = 1 },
-                { item = 'provision_fish_largemouth_bass', label = 'Largemouth Bass (Large)', amount = 1 },
-                { item = 'provision_fish_lake_sturgeon', label = 'Lake Sturgeon', amount = 1 },
-                { item = 'provision_fish_muskie', label = 'Muskie', amount = 1 },
-                { item = 'provision_fish_northern_pike', label = 'Northern Pike', amount = 1 },
-                { item = 'provision_fish_perch', label = 'Perch (Small)', amount = 1 },
-                { item = 'provision_fish_perch', label = 'Perch (Medium)', amount = 1 },
-                { item = 'provision_fish_rock_bass', label = 'Rock Bass (Small)', amount = 1 },
-                { item = 'provision_fish_rock_bass', label = 'Rock Bass (Medium)', amount = 1 },
-                { item = 'provision_fish_smallmouth_bass', label = 'Smallmouth Bass (Large)', amount = 1 },
-                { item = 'provision_fish_smallmouth_bass', label = 'Smallmouth Bass (Medium)', amount = 1 },
-                { item = 'provision_fish_steelhead_trout', label = 'Rainbow Trout', amount = 1 },
+                { item = 'provision_fish_lake_sturgeon', label = 'Lake Sturgeon', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_muskie', label = 'Muskie', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_northern_pike', label = 'Northern Pike', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_sockeye_salmon', label = 'Sockeye Salmon', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_steelhead_trout', label = 'Rainbow Trout', amount = { min = 1, max = 1 } },
             },
             river = {
-                { item = 'provision_fish_bluegill', label = 'Bluegill (Small)', amount = 1 },
-                { item = 'provision_fish_bluegill', label = 'Bluegill (Medium)', amount = 1 },
-                { item = 'provision_fish_bullhead_catfish', label = 'Bullhead Catfish (Small)', amount = 1 },
-                { item = 'provision_fish_bullhead_catfish', label = 'Bullhead Catfish (Medium)', amount = 1 },
-                { item = 'provision_fish_chain_pickerel', label = 'Chain Pickerel (Small)', amount = 1 },
-                { item = 'provision_fish_chain_pickerel', label = 'Chain Pickerel (Medium)', amount = 1 },
-                { item = 'provision_fish_channel_catfish', label = 'Channel Catfish (Large)', amount = 1 },
-                { item = 'provision_fish_channel_catfish', label = 'Channel Catfish (Extra Large)', amount = 1 },
-                { item = 'provision_fish_redfin_pickerel', label = 'Redfin Pickerel (Small)', amount = 1 },
-                { item = 'provision_fish_redfin_pickerel', label = 'Redfin Pickerel (Medium)', amount = 1 },
-                { item = 'provision_fish_smallmouth_bass', label = 'Smallmouth Bass (Medium)', amount = 1 },
-                { item = 'provision_fish_smallmouth_bass', label = 'Smallmouth Bass (Large)', amount = 1 },
-                { item = 'provision_fish_sockeye_salmon', label = 'Sockeye Salmon (Small)', amount = 1 },
-                { item = 'provision_fish_sockeye_salmon', label = 'Sockeye Salmon (Medium)', amount = 1 },
-                { item = 'provision_fish_sockeye_salmon_legendary', label = 'Sockeye Salmon (Large)', amount = 1 },
-                { item = 'provision_fish_steelhead_trout', label = 'Rainbow Trout', amount = 1 },
+                { item = 'provision_fish_chain_pickerel', label = 'Chain Pickerel', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_redfin_pickerel', label = 'Redfin Pickerel', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_smallmouth_bass', label = 'Smallmouth Bass', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_sockeye_salmon', label = 'Sockeye Salmon', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_steelhead_trout', label = 'Rainbow Trout', amount = { min = 1, max = 1 } },
             },
             creek = {
-                { item = 'provision_fish_bluegill', label = 'Bluegill (Small)', amount = 1 },
-                { item = 'provision_fish_chain_pickerel', label = 'Chain Pickerel (Small)', amount = 1 },
-                { item = 'provision_fish_chain_pickerel', label = 'Chain Pickerel (Medium)', amount = 1 },
-                { item = 'provision_fish_redfin_pickerel', label = 'Redfin Pickerel (Small)', amount = 1 },
-                { item = 'provision_fish_redfin_pickerel', label = 'Redfin Pickerel (Medium)', amount = 1 },
-                { item = 'provision_fish_smallmouth_bass', label = 'Smallmouth Bass (Medium)', amount = 1 },
-                { item = 'provision_fish_sockeye_salmon', label = 'Sockeye Salmon (Small)', amount = 1 },
-                { item = 'provision_fish_steelhead_trout', label = 'Rainbow Trout', amount = 1 },
+                { item = 'provision_fish_chain_pickerel', label = 'Chain Pickerel', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_redfin_pickerel', label = 'Redfin Pickerel', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_smallmouth_bass', label = 'Smallmouth Bass', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_sockeye_salmon', label = 'Sockeye Salmon', amount = { min = 1, max = 1 } },
             },
             pond = {
-                { item = 'provision_fish_bluegill', label = 'Bluegill (Small)', amount = 1 },
-                { item = 'provision_fish_bluegill', label = 'Bluegill (Medium)', amount = 1 },
-                { item = 'provision_fish_chain_pickerel', label = 'Chain Pickerel (Small)', amount = 1 },
-                { item = 'provision_fish_largemouth_bass', label = 'Largemouth Bass (Medium)', amount = 1 },
-                { item = 'provision_fish_largemouth_bass', label = 'Largemouth Bass (Large)', amount = 1 },
-                { item = 'provision_fish_perch', label = 'Perch (Small)', amount = 1 },
-                { item = 'provision_fish_perch', label = 'Perch (Medium)', amount = 1 },
-                { item = 'provision_fish_rock_bass', label = 'Rock Bass (Small)', amount = 1 },
-                { item = 'provision_fish_rock_bass', label = 'Rock Bass (Medium)', amount = 1 },
+                { item = 'provision_fish_bluegill', label = 'Bluegill', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_chain_pickerel', label = 'Chain Pickerel', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_largemouth_bass', label = 'Largemouth Bass', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_perch', label = 'Perch', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_rock_bass', label = 'Rock Bass', amount = { min = 1, max = 1 } },
             },
             swamp = {
-                { item = 'provision_fish_bluegill', label = 'Bluegill (Small)', amount = 1 },
-                { item = 'provision_fish_bluegill', label = 'Bluegill (Medium)', amount = 1 },
-                { item = 'provision_fish_bullhead_catfish', label = 'Bullhead Catfish (Small)', amount = 1 },
-                { item = 'provision_fish_bullhead_catfish', label = 'Bullhead Catfish (Medium)', amount = 1 },
-                { item = 'provision_fish_longnose_gar', label = 'Longnose Gar', amount = 1 },
-                { item = 'provision_fish_rock_bass', label = 'Rock Bass (Small)', amount = 1 },
-                { item = 'provision_fish_rock_bass', label = 'Rock Bass (Medium)', amount = 1 },
+                { item = 'provision_fish_bluegill', label = 'Bluegill', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_bullhead_catfish', label = 'Bullhead Catfish', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_longnose_gar', label = 'Longnose Gar', amount = { min = 1, max = 1 } },
+                { item = 'provision_fish_rock_bass', label = 'Rock Bass', amount = { min = 1, max = 1 } },
             }
         }
     }
+}
+
+Config.MiningTargets = {
+    -- Optional ox_target interaction points to highlight mineable spots
+    {
+        name = 'grizzlies_mine_face',
+        coords = vector3(-1409.6, 1163.8, 226.5),
+        radius = 1.5,
+        icon = 'fa-solid fa-person-digging',
+        label = Locale:t('mining.target_label'),
+    },
+    {
+        name = 'annesburg_mine_face',
+        coords = vector3(2796.4, 1389.6, 71.4),
+        radius = 1.5,
+        icon = 'fa-solid fa-person-digging',
+        label = Locale:t('mining.target_label'),
+    },
+    {
+        name = 'donner_mine_face',
+        coords = vector3(822.4, 1926.0, 259.2),
+        radius = 1.6,
+        icon = 'fa-solid fa-person-digging',
+        label = Locale:t('mining.target_label'),
+    },
 }
 
 Config.IceFields = {
