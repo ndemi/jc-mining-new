@@ -12,13 +12,12 @@ https://youtu.be/FLDydwk9LX0
 JC-Mining is a more advanced mining script created with capability for both RSG and VORP now too! It involves a very easy and well configurable config mine, including bunch of other features listed below, video showcases above, and as always discord for support too below!
 
 # Features
-- Goldpanning
 - Rock Washing
 - Several mine locations
 - Hidden Mines
-- Adding several mine types
-- Activate/Deactivate breakchance for pickaxe
-- Hotspots for Goldpanning to get higher reward amount and chance!
+- Multiple mine reward tables
+- Configurable pickaxe durability with replacement item support
+- Ice drilling using placed drill press props
 
 # Dependencies
 ***For RSG***
@@ -79,7 +78,8 @@ Wanna use the items I do? Make sure you have these in your items.lua for rsg-cor
     
     -- Tools
     ['pickaxe']      = {['name'] = 'pickaxe',      ['label'] = 'Pickaxe',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'pickaxe.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A tool used to mine with!'},
-    ['goldpan']      = {['name'] = 'goldpan',      ['label'] = 'Goldpan',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'goldpan.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A tool to use for gold farming in rivers!'},
+    ['broken_pickaxe']      = {['name'] = 'broken_pickaxe',      ['label'] = 'Broken Pickaxe',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'broken_pickaxe.png',      ['unique'] = true, ['useable'] = false, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'Remains of a shattered pickaxe.'},
+    ['ice']      = {['name'] = 'ice',      ['label'] = 'Ice Chunk',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'ice.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'Freshly drilled ice.'},
 ```
 
 Items to add into database for VORP;
