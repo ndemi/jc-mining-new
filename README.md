@@ -1,98 +1,53 @@
 # jc-mining - Recreated
- A newly and better optimized mining system!
+A refreshed and optimised mining system focused on the RSG framework.
 
-# PolyZone
-Add the polyzone script in a folder for itself, that's a resource for itself and not part of the script, however I have realised that a lot of the polyzones are different to this one that is compatible!
+## PolyZone
+Add the PolyZone script as its own resource – it is required for the mining zones to function correctly.
 
-# Showcase:
-https://youtu.be/bixu5KhiE-4
+## Showcase
+https://youtu.be/bixu5KhiE-4  
 https://youtu.be/FLDydwk9LX0
 
-# JC-Mining
-JC-Mining is a more advanced mining script created with capability for both RSG and VORP now too! It involves a very easy and well configurable config mine, including bunch of other features listed below, video showcases above, and as always discord for support too below!
+## Features
+- Configurable mining that only produces `rock` plus a chance to uncover `shinyore` dirty stones.
+- Pickaxe durability stored in item metadata (default 100, -1 per swing) with automatic replacement when broken.
+- Ice drill durability (default 100, -3 per use) with an ox_target interaction and interact-sound drilling audio.
+- Washing system that requires the player to stand in water, shows a countdown, and converts each shiny ore into a gem based on weighted probabilities (1 stone = 1 gem).
+- Simple configuration for rock yields, shiny ore chances, washing duration, gem table and drill rewards.
 
-# Features
-- Rock Washing
-- Several mine locations
-- Hidden Mines
-- Multiple mine reward tables
-- Configurable pickaxe durability with replacement item support
-- Ice drilling using placed drill press props
+## Dependencies
+- [rsg-core](https://github.com/)
+- [ox_lib](https://overextended.dev/)
+- [ox_target](https://overextended.dev/)
+- [PolyZone](https://github.com/mkafrin/PolyZone)
+- [interact-sound](https://github.com/qbcore-framework/interact-sound)
 
-# Dependencies
-***For RSG***
-- rsg-core
-- PolyZone
+Add a drilling `.ogg` clip of your choice to `interact-sound/client/html/sounds/`, register it with that resource's manifest, and keep the filename aligned with `Config.Drill.soundName`.
 
-***For Vorp***
-- vorp-core
-- vorp_progressbar
-- PolyZone
+## Adding Items (rsg-core)
+Below is a minimal item list needed for the new workflow. Adjust weights and images to fit your inventory setup.
 
-# Discord Support
-[https://discord.gg/xvU7HxsENH](https://discord.gg/uFVYG6UJaM)
+```lua
+-- Mining and washing
+['rock']      = { name = 'rock',      label = 'Rock',               weight = 100, type = 'item', image = 'rock.png',      unique = false, useable = false, shouldClose = false, description = 'A chunk of stone fresh from the mine.' },
+['shinyore']  = { name = 'shinyore',  label = 'Zabrudzony kamień',  weight = 250, type = 'item', image = 'shinyore.png',  unique = false, useable = true,  shouldClose = true,  description = 'Kryje w sobie coś wartościowego… albo i nie.' },
 
-# Adding Items
-Wanna use the items I do? Make sure you have these in your items.lua for rsg-core(VORP is below)
-```-- Crafting aterials
-    ['iron']      = {['name'] = 'iron',      ['label'] = 'Iron',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'iron.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['aluminum']      = {['name'] = 'aluminum',      ['label'] = 'Aluminum',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'aluminum.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['coal']      = {['name'] = 'coal',      ['label'] = 'Coal',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'coal.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['copper']      = {['name'] = 'copper',      ['label'] = 'Copper',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'copper.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['silver']      = {['name'] = 'silver',      ['label'] = 'Silver',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'silver.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['steel']      = {['name'] = 'steel',      ['label'] = 'Steel',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'steel.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['lead']      = {['name'] = 'lead',      ['label'] = 'Lead',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'lead.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['nitrate']      = {['name'] = 'nitrate',      ['label'] = 'Nitrate',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'nitrate.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['fibers']      = {['name'] = 'fibers',      ['label'] = 'Fibers',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'fibers.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['wood']      = {['name'] = 'wood',      ['label'] = 'Wood',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'wood.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['woodlog']      = {['name'] = 'woodlog',      ['label'] = 'Wooden Log',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'woodlog.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['woodplank']      = {['ame'] = 'woodplank',      ['label'] = 'Wooden Plank',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'woodplank.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['wood']      = {['name'] = 'wood',      ['label'] = 'Wood',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'wood.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['bark']      = {['name'] = 'bark',      ['label'] = 'Bark',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'bark.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['rubber']      = {['name'] = 'rubber',      ['label'] = 'Rubber',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'rubber.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    -- Oresn
-    ['ironore']      = {['name'] = 'ironore',      ['label'] = 'Iron Ore',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'ironore.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used for smelting down!'},
-    ['unrefined_steel']      = {['name'] = 'unrefined_steel',      ['label'] = 'Unrefined Steel',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'unrefined_steel.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used for smelting down!'},
-    ['aluminum_ore']      = {['name'] = 'aluminum_ore',      ['label'] = 'Aluminum Ore',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'aluminum_ore.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used for smelting down!'},
-    ['copper_ore']      = {['name'] = 'copper_ore',      ['label'] = 'Copper Ore',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'copper_ore.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used for smelting down!'},
-    ['gold_ore']      = {['name'] = 'gold_ore',      ['label'] = 'Gold Ore',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'gold_ore.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used for smelting down!'},
-    ['emeraldore']      = {['name'] = 'emeraldore',      ['label'] = 'Emerald Ore',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'emeraldore.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used for smelting down!'},
-    ['diamondore']      = {['name'] = 'diamondore',      ['label'] = 'Diamond Ore',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'diamondore.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used for smelting down!'},
-    ['rubyore']      = {['name'] = 'rubyore',      ['label'] = 'Ruby Ore',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'rubyore.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used for smelting down!'},
-    ['silver_ore']      = {['name'] = 'silver_ore',      ['label'] = 'Silver Ore',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'silver_ore.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used for smelting down!'},
-    ['stone']      = {['name'] = 'stone',      ['label'] = 'Stone',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'stone.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used for smelting down!'},
-    ['rock']      = {['name'] = 'rock',      ['label'] = 'Rock',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'rock.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used for smelting down!'},
-    ['rocksalt']      = {['name'] = 'rocksalt',      ['label'] = 'Rocksalt',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'rocksalt.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used for smelting down!'},
-    ['sand']      = {['name'] = 'sand',      ['label'] = 'Sand',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'sand.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used for smelting down!'},
-    ['nitratepowder']      = {['name'] = 'nitratepowder',      ['label'] = 'Nitrate Powder',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'nitratepowder.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    ['glass']      = {['name'] = 'glass',      ['label'] = 'Glass',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'glass.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A material used to craft with!'},
-    -- Gems
-    ['diamond']      = {['name'] = 'diamond',      ['label'] = 'Diamond',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'diamond.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A beautiful gem, often used to make jewelry with!'},
-    ['ruby']      = {['name'] = 'ruby',      ['label'] = 'Ruby',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'ruby.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A beautiful gem, often used to make jewelry with!'},
-    ['emerald']      = {['name'] = 'emerald',      ['label'] = 'Emerald',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'emerald.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A beautiful gem, often used to make jewelry with!'},
-    -- Gold
-    ['smallnugget']      = {['name'] = 'smallnugget',      ['label'] = 'Small Gold Nugget',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'smallnugget.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'Gold!'},
-    ['mediumnugget']      = {['name'] = 'mediumnugget',      ['label'] = 'Medium Gold Nugget',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'mediumnugget.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'Gold!'},
-    ['largenugget']      = {['name'] = 'largenugget',      ['label'] = 'Large Gold Nugget',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'largenugget.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'Gold!'},
-    ['goldflakes']      = {['name'] = 'goldflakes',      ['label'] = 'Gold Flakes',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'goldflakes.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'Gold!'},
-    
-    -- Tools
-    ['pickaxe']      = {['name'] = 'pickaxe',      ['label'] = 'Pickaxe',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'pickaxe.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A tool used to mine with!'},
-    ['broken_pickaxe']      = {['name'] = 'broken_pickaxe',      ['label'] = 'Broken Pickaxe',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'broken_pickaxe.png',      ['unique'] = true, ['useable'] = false, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'Remains of a shattered pickaxe.'},
-    ['ice']      = {['name'] = 'ice',      ['label'] = 'Ice Chunk',       ['weight'] = 1, ['type'] = 'item', ['image'] = 'ice.png',      ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'Freshly drilled ice.'},
+-- Gems (sample table used by Config.Washing.gems)
+['diamond']     = { name = 'diamond',     label = 'Diamond',        weight = 100, type = 'item', image = 'diamond.png',     unique = false, useable = false, shouldClose = false, description = 'A beautiful gem used for fine jewellery.' },
+['ruby']        = { name = 'ruby',        label = 'Ruby',           weight = 100, type = 'item', image = 'ruby.png',        unique = false, useable = false, shouldClose = false, description = 'Deep red and very rare.' },
+['emerald']     = { name = 'emerald',     label = 'Emerald',        weight = 100, type = 'item', image = 'emerald.png',     unique = false, useable = false, shouldClose = false, description = 'A vibrant green gemstone.' },
+['sapphire']    = { name = 'sapphire',    label = 'Sapphire',       weight = 100, type = 'item', image = 'sapphire.png',    unique = false, useable = false, shouldClose = false, description = 'A rich blue gem.' },
+['opal']        = { name = 'opal',        label = 'Opal',           weight = 100, type = 'item', image = 'opal.png',        unique = false, useable = false, shouldClose = false, description = 'An iridescent stone with shifting colours.' },
+['topaz']       = { name = 'topaz',       label = 'Topaz',          weight = 100, type = 'item', image = 'topaz.png',       unique = false, useable = false, shouldClose = false, description = 'Golden and warm to the touch.' },
+['garnet']      = { name = 'garnet',      label = 'Garnet',         weight = 100, type = 'item', image = 'garnet.png',      unique = false, useable = false, shouldClose = false, description = 'A deep crimson crystal.' },
+['amethyst']    = { name = 'amethyst',    label = 'Amethyst',       weight = 100, type = 'item', image = 'amethyst.png',    unique = false, useable = false, shouldClose = false, description = 'A violet-hued gemstone.' },
+['jade']        = { name = 'jade',        label = 'Jade',           weight = 100, type = 'item', image = 'jade.png',        unique = false, useable = false, shouldClose = false, description = 'Smooth green stone prized in trade.' },
+['pearl']       = { name = 'pearl',       label = 'Pearl',          weight = 100, type = 'item', image = 'pearl.png',       unique = false, useable = false, shouldClose = false, description = 'Delicate treasure from the depths.' },
+
+-- Tools
+['pickaxe']          = { name = 'pickaxe',          label = 'Pickaxe',          weight = 100, type = 'item', image = 'pickaxe.png',      unique = true,  useable = true,  shouldClose = true,  description = 'Essential for breaking apart rock faces.' },
+['broken_pickaxe']   = { name = 'broken_pickaxe',   label = 'Broken Pickaxe',   weight = 100, type = 'item', image = 'broken_pickaxe.png', unique = false, useable = false, shouldClose = false, description = 'Remains of a shattered pickaxe.' },
+['ice']              = { name = 'ice',              label = 'Ice Chunk',        weight = 100, type = 'item', image = 'ice.png',          unique = false, useable = false, shouldClose = false, description = 'Freshly drilled ice.' }
 ```
 
-Items to add into database for VORP;
-```
-INSERT INTO items (item, label, `limit`, can_remove, type, usable, groupId, `desc`) VALUES 
-('diamondore', 'Diamond Ore', 30, 1, 'item_standard', 0, 1, 'A beautiful gem'),
-('rubyore', 'Ruby Ore', 30, 1, 'item_standard', 0, 1, 'A beautiful gem'),
-('emeraldore', 'Emerald Ore', 30, 1, 'item_standard', 0, 1, 'A beautiful gem'),
-('silver_ore', 'Silver Ore', 30, 1, 'item_standard', 0, 1, 'An ore that can be used to smelt down'),
-('gold_ore', 'Gold Ore', 30, 1, 'item_standard', 0, 1, 'An ore that can be used to smelt down'),
-('ironore', 'Iron Ore', 30, 1, 'item_standard', 0, 1, 'An ore that can be used to smelt down'),
-('aluminum_ore', 'Aluminum Ore', 30, 1, 'item_standard', 0, 1, 'An ore that can be used to smelt down'),
-('copper_ore', 'Copper Ore', 30, 1, 'item_standard', 0, 1, 'An ore that can be used to smelt down'),
-('rocksalt', 'Rocksalt', 30, 1, 'item_standard', 0, 1, 'Salt from a rock, can be used to caft with');
-```
-Remember also to make pickaxe and rock usable by changing their value from 0 to 1 in items table in your database!
+Update `Config.lua` to match your preferred chances, item names and sounds. Remember to make `shinyore` usable so players can start washing directly from their inventory.
