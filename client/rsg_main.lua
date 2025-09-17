@@ -14,7 +14,7 @@ local function startWashingCountdown(duration)
         return
     end
 
-    local labelTemplate = (Config.Washing and Config.Washing.countdownLabel) or 'Pozostały czas: %ds'
+    local labelTemplate = (Config.Washing and Config.Washing.countdownLabel) or Locale:t('washing.countdown_label')
     local totalSeconds = math.max(1, math.floor(duration / 1000))
     washingCountdownActive = true
 
@@ -150,7 +150,7 @@ Citizen.CreateThread(function()
         {
             name = 'jc-mining:drill',
             icon = Config.IceDrill.targetIcon or 'fa-solid fa-icicles',
-            label = Config.IceDrill.prompt or 'Drill for ice',
+            label = Config.IceDrill.prompt or Locale:t('ice_drill.target_label'),
             onSelect = function(data)
                 if isWorking then
                     return
@@ -167,17 +167,17 @@ end)
 
 RegisterNetEvent('jc-mining:client:StartMining', function()
     if isInsideDrillOnlyZone then
-        lib.notify({ title = 'You can only drill for ice in this area!', type = 'error', duration = 3000 })
+        lib.notify({ title = Locale:t('error.drill_only_zone'), type = 'error', duration = 3000 })
         return
     end
 
     if not isInsideMine then
-        lib.notify({ title = 'You\'re not inside a mine!', type = 'error', duration = 3000 })
+        lib.notify({ title = Locale:t('error.not_in_mine'), type = 'error', duration = 3000 })
         return
     end
 
     if isWorking then
-        lib.notify({ title = 'You\'re already doing something!', type = 'error', duration = 3000 })
+        lib.notify({ title = Locale:t('error.already_working'), type = 'error', duration = 3000 })
         return
     end
 
@@ -209,22 +209,22 @@ end)
 
 RegisterNetEvent('jc-mining:client:StartIceDrilling', function(entity)
     if isWorking then
-        lib.notify({ title = 'You\'re already doing something!', type = 'error', duration = 3000 })
+        lib.notify({ title = Locale:t('error.already_working'), type = 'error', duration = 3000 })
         return
     end
 
     if not Config.IceDrill or not Config.IceDrill.enabled then
-        lib.notify({ title = 'Ice drilling is not available.', type = 'error', duration = 3000 })
+        lib.notify({ title = Locale:t('error.ice_drilling_unavailable'), type = 'error', duration = 3000 })
         return
     end
 
     if isInsideMine then
-        lib.notify({ title = 'You cannot drill for ice while inside a mine.', type = 'error', duration = 3000 })
+        lib.notify({ title = Locale:t('error.drilling_inside_mine'), type = 'error', duration = 3000 })
         return
     end
 
     if not isInsideIceField then
-        lib.notify({ title = 'You need to be at an ice field to drill.', type = 'error', duration = 3000 })
+        lib.notify({ title = Locale:t('error.not_in_ice_field'), type = 'error', duration = 3000 })
         return
     end
 
@@ -237,7 +237,7 @@ RegisterNetEvent('jc-mining:client:StartIceDrilling', function(entity)
     end
 
     if not drillEntity or drillEntity == 0 then
-        lib.notify({ title = 'You need to be near a drill.', type = 'error', duration = 3000 })
+        lib.notify({ title = Locale:t('error.need_near_drill'), type = 'error', duration = 3000 })
         return
     end
 
@@ -269,7 +269,7 @@ RegisterNetEvent('jc-mining:client:StartIceDrilling', function(entity)
             combat = true,
             car = true
         },
-        label = Config.IceDrill.prompt or 'Drilling ice',
+        label = (Config.IceDrill.prompt or Locale:t('ice_drill.progress_label')),
         anim = {
             dict = 'amb_work@world_human_pickaxe@wall@male_d@base',
             clip = 'base'
@@ -296,7 +296,7 @@ RegisterNetEvent('jc-mining:client:IceDrillFailed', function(message)
         TriggerEvent('InteractSound_CL:StopSound', Config.IceDrill.soundName)
     end
 
-    lib.notify({ title = message or 'The drill is not operational.', type = 'error', duration = 3000 })
+    lib.notify({ title = message or Locale:t('ice_drill.failure_default'), type = 'error', duration = 3000 })
 end)
 
 RegisterNetEvent('jc-mining:client:IceDrillDepleted', function(netId)
@@ -321,12 +321,12 @@ end)
 
 RegisterNetEvent('jc-mining:client:StartWashing', function()
     if isWorking then
-        lib.notify({ title = 'You\'re already doing something!', type = 'error', duration = 3000 })
+        lib.notify({ title = Locale:t('error.already_working'), type = 'error', duration = 3000 })
         return
     end
 
     if not Config.Washing or not Config.Washing.item then
-        lib.notify({ title = 'Washing is not configured.', type = 'error', duration = 3000 })
+        lib.notify({ title = Locale:t('error.washing_not_configured'), type = 'error', duration = 3000 })
         return
     end
 
@@ -335,7 +335,7 @@ RegisterNetEvent('jc-mining:client:StartWashing', function()
     local currentDistrict = Citizen.InvokeNative(0x43AD8FC02B429D33, coords.x, coords.y, coords.z, 3)
 
     if not currentDistrict or not IsEntityInWater(ped) then
-        lib.notify({ title = 'You\'re not in water!', type = 'error', duration = 3000 })
+        lib.notify({ title = Locale:t('error.not_in_water'), type = 'error', duration = 3000 })
         return
     end
 
@@ -364,7 +364,7 @@ RegisterNetEvent('jc-mining:client:StartWashing', function()
             dict = 'script_rc@cldn@ig@rsc2_ig1_questionshopkeeper',
             clip = 'inspectfloor_player'
         },
-        label = 'Mycie zabrudzonego kamienia',
+        label = Locale:t('washing.progress_label'),
     })
 
     stopWashingCountdown()

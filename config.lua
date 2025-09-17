@@ -1,11 +1,16 @@
 Config = Config or {}
 
+Config.Locale = 'en' -- Default language (available: 'en', 'pl')
+if Locale and Locale.set then
+    Locale:set(Config.Locale)
+end
+
 Config.Pickaxe = 'pickaxe' -- Pickaxe item name in the inventory
 Config.PickaxeProp = 'p_pickaxe01x' -- Pickaxe world prop that will be attached to the player
 Config.PickaxeDurability = 100 -- How many successful mining attempts a pickaxe can perform before breaking (set to 0 to disable)
 Config.PickaxeDurabilityLoss = 1 -- Durability removed after every mining hit
 Config.PickaxeReplacementItem = 'broken_pickaxe' -- Item that will replace the pickaxe when it breaks (set to false/nil to disable)
-Config.PickaxeBrokenMessage = 'Your pickaxe broke!' -- Notification text when the pickaxe breaks
+Config.PickaxeBrokenMessage = nil -- Override to customise the pickaxe break notification (uses locale when nil)
 
 Config.RockItem = 'rock' -- Base mining reward
 Config.RockRewardAmount = { min = 1, max = 3 } -- Amount of rocks rewarded per successful hit
@@ -14,13 +19,13 @@ Config.ShinyOre = {
     item = 'shinyore',
     chancePerHit = 20, -- One in X chance to find a dirty shiny ore while mining (set to 0 to disable)
     metadata = nil, -- Optional metadata table to attach to the item when rewarded
-    foundMessage = 'You have uncovered a dirty stone!'
+    foundMessage = nil, -- Override to customise the shiny ore found notification (uses locale when nil)
 }
 
 Config.Washing = {
     item = 'shinyore', -- Item that can be washed when using water
     duration = 7000, -- Duration in milliseconds for washing a shiny ore
-    countdownLabel = 'Mycie kamienia: %ds', -- Text UI countdown while washing
+    countdownLabel = nil, -- Override to customise the washing countdown label (uses locale when nil)
     gems = {
         { item = 'diamond', chance = 5 },
         { item = 'ruby', chance = 10 },
@@ -39,19 +44,19 @@ Config.IceDrill = {
     enabled = true, -- Toggle the ice drilling feature
     prop = 'p_drillpress01x', -- Prop that represents the drill press in the world
     targetIcon = 'fa-solid fa-icicles', -- Icon used by ox_target when interacting with the drill
-    prompt = 'Rozpocznij wiercenie lodu', -- Label used by ox_target
+    prompt = nil, -- Override to customise the interaction prompt (uses locale when nil)
     soundName = 'ice_drill', -- interact-sound clip played while drilling
     duration = 7000, -- Duration in milliseconds for a drilling cycle
     rewardItem = 'ice', -- Item that will be rewarded after drilling
     rewardAmount = { min = 1, max = 3 }, -- Amount of ice rewarded per cycle
     durability = 100, -- How many times the drill can be used before breaking (set to 0 for infinite)
     durabilityLoss = 3, -- Durability removed every time the drill is used
-    brokenMessage = 'The drill has been depleted and needs repairs.' -- Message shown when the drill breaks
+    brokenMessage = nil -- Override to customise the drill broken message (uses locale when nil)
 }
 
 Config.IceFields = {
     {
-        label = 'Lake Isabella Ice Field', -- Visible blip label
+        label = Locale:t('blips.lake_isabella_ice_field'), -- Visible blip label
         id = 'lake_isabella_ice', -- Unique Identifier
         blip = vector3(-528.94, 410.12, 86.74), -- Blip location
         showBlip = true, -- Toggle visibility of the blip on the map
@@ -71,7 +76,7 @@ Config.IceFields = {
         maxZ = 92,
     },
     {
-        label = 'Spider Gorge Ice Shelf',
+        label = Locale:t('blips.spider_gorge_ice_shelf'),
         id = 'spider_gorge_ice',
         blip = vector3(-1766.58, 1283.47, 246.82),
         showBlip = false,
@@ -93,7 +98,7 @@ Config.IceFields = {
 
 Config.Mines = {
     {
-        label = 'Grizzlies Mine', -- This is strictly a blip name for visible mines! Can be named anything ;)
+        label = Locale:t('blips.grizzlies_mine'), -- This is strictly a blip name for visible mines! Can be named anything ;)
         id = 'grizzlies_mine', -- Unique Identifier
         blip = vector3(-1404.55, 1156.1407, 226.03324), -- The location of the blip
         showBlip = true, -- Whether the mine should be hidden or visible, true for visible false for hidden.
@@ -112,7 +117,7 @@ Config.Mines = {
         maxZ = 230, -- Maximum Z Pos for the polyzone
     },
     {
-        label = 'Annesburg Mine',
+        label = Locale:t('blips.annesburg_mine'),
         id = 'annesburg_mine1',
         blip = vector3(2799.5493, 1376.2176, 71.310249),
         showBlip = true,
@@ -131,7 +136,7 @@ Config.Mines = {
         maxZ = 73,
     },
     {
-        label = 'Annesburg Mine',
+        label = Locale:t('blips.annesburg_mine'),
         id = 'annesburg_mine2',
         blip = vector3(2791.7226, 1339.9825, 71.275665),
         showBlip = true,
@@ -157,7 +162,7 @@ Config.Mines = {
         maxZ = 72,
     },
     {
-        label = 'Donner Mine',
+        label = Locale:t('blips.donner_mine'),
         id = 'donner_mine',
         blip = vector3(803.37786, 1921.03, 256.23864),
         showBlip = true,
@@ -186,7 +191,7 @@ Config.Mines = {
         maxZ = 264,
     },
     {
-        label = 'Big Valley Mine',
+        label = Locale:t('blips.big_valley_mine'),
         id = 'bigvalley_mine',
         blip = vector3(-2322.384, 94.460647, 221.53462),
         showBlip = true,
@@ -215,7 +220,7 @@ Config.Mines = {
         maxZ = 225,
     },
     {
-        label = 'Big Valley Mine Hidden',
+        label = Locale:t('blips.big_valley_mine_hidden'),
         id = 'bigvalley_mine_hidden',
         blip = vector3(-2322.384, 94.460647, 221.53462),
         showBlip = false,
@@ -239,7 +244,7 @@ Config.Mines = {
         maxZ = 252,
     },
     {
-        label = 'Devils Cave',
+        label = Locale:t('blips.devils_cave'),
         id = 'devils_cave',
         blip = vector3(-2658.905, 692.11962, 182.8746),
         showBlip = true,
@@ -263,7 +268,7 @@ Config.Mines = {
         maxZ = 182,
     },
     {
-        label = 'Bear Cave',
+        label = Locale:t('blips.bear_cave'),
         id = 'bear_cave',
         blip = vector3(-1517.018, 722.56707, 126.63545),
         showBlip = false,
@@ -282,7 +287,7 @@ Config.Mines = {
         maxZ = 128.5,
     },
     {
-        label = 'Bear Cave',
+        label = Locale:t('blips.bear_cave'),
         id = 'bear_cave',
         blip = vector3(-1517.018, 722.56707, 126.63545),
         showBlip = false,
