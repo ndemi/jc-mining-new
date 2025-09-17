@@ -1,5 +1,8 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 local drillDurability = {}
+local WATER_ZONE_NATIVE = 0x5BA7A68A346A5A91
+local waterBodiesByHash
+local waterBodiesByName
 
 local function cloneTable(tbl)
     if not tbl then
@@ -13,6 +16,105 @@ local function cloneTable(tbl)
     end
 
     return copy
+end
+
+local function resolveAmount(spec, default)
+    default = default or 1
+
+    if type(spec) == 'table' then
+        local minAmount = spec.min or spec[1] or default
+        local maxAmount = spec.max or spec[2] or minAmount
+
+        if maxAmount < minAmount then
+            maxAmount = minAmount
+        end
+
+        return math.random(minAmount, maxAmount)
+    elseif type(spec) == 'number' then
+        local amount = math.floor(spec)
+
+        if amount < 1 then
+            amount = default
+        end
+
+        return amount
+    end
+
+    return default
+end
+
+local function rollChance(chance)
+    if not chance or chance <= 0 then
+        return false
+    end
+
+    if chance <= 1 then
+        return true
+    end
+
+    local divisor = math.floor(chance)
+
+    if divisor < 1 then
+        divisor = 1
+    end
+
+    return math.random(1, divisor) == 1
+end
+
+local function buildWaterBodies()
+    waterBodiesByHash = {}
+    waterBodiesByName = {}
+
+    if not Config.WaterBodies then
+        return
+    end
+
+    for name, data in pairs(Config.WaterBodies) do
+        if type(name) == 'string' and type(data) == 'table' then
+            local entry = cloneTable(data)
+            local hash = entry.hash or joaat(name)
+
+            if hash and hash ~= 0 then
+                entry.hash = hash
+                entry.id = entry.id or name
+                entry.type = entry.type or 'lake'
+                entry.washing = entry.washing ~= false
+                entry.fishing = entry.fishing ~= false
+                waterBodiesByHash[hash] = entry
+                waterBodiesByName[name] = entry
+            end
+        end
+    end
+end
+
+local function getWaterBodyData(value)
+    if not waterBodiesByHash then
+        buildWaterBodies()
+    end
+
+    if type(value) == 'string' then
+        if not waterBodiesByName then
+            buildWaterBodies()
+        end
+
+        return waterBodiesByName[value]
+    end
+
+    return waterBodiesByHash and waterBodiesByHash[value]
+end
+
+local function getWaterHashFromCoords(coords)
+    if not coords then
+        return 0
+    end
+
+    return Citizen.InvokeNative(WATER_ZONE_NATIVE, coords.x, coords.y, coords.z)
+end
+
+local function getWaterBodyAtCoords(coords)
+    local hash = getWaterHashFromCoords(coords)
+    local info = getWaterBodyData(hash)
+    return info, hash
 end
 
 local function formatDurability(current, max)
@@ -133,26 +235,7 @@ local function handlePickaxeDurability(src)
 end
 
 local function getRockRewardAmount()
-    local reward = Config.RockRewardAmount or 1
-
-    if type(reward) == 'table' then
-        local minAmount = reward.min or reward[1] or 1
-        local maxAmount = reward.max or reward[2] or minAmount
-
-        if maxAmount < minAmount then
-            maxAmount = minAmount
-        end
-
-        return math.random(minAmount, maxAmount)
-    elseif type(reward) == 'number' then
-        if reward < 1 then
-            return 1
-        end
-
-        return math.floor(reward)
-    end
-
-    return 1
+    return resolveAmount(Config.RockRewardAmount, 1)
 end
 
 local function selectGemReward()
@@ -216,6 +299,33 @@ RegisterNetEvent('jc-mining:server:washShinyOre', function()
     local Player = RSGCore.Functions.GetPlayer(src)
 
     if not Player then
+        return
+    end
+
+    local ped = GetPlayerPed(src)
+
+    if not ped or ped == 0 then
+        return
+    end
+
+    if not IsEntityInWater(ped) then
+        TriggerClientEvent('ox_lib:notify', src, {
+            title = Locale:t('error.not_in_water'),
+            type = 'error',
+            duration = 3000
+        })
+        return
+    end
+
+    local coords = GetEntityCoords(ped)
+    local waterInfo = select(1, getWaterBodyAtCoords(coords))
+
+    if not waterInfo or not waterInfo.washing then
+        TriggerClientEvent('ox_lib:notify', src, {
+            title = Locale:t('error.invalid_water_body'),
+            type = 'error',
+            duration = 3000
+        })
         return
     end
 
@@ -308,7 +418,7 @@ RegisterNetEvent('jc-mining:server:giveitems', function()
     handlePickaxeDurability(src)
 end)
 
-RegisterNetEvent('jc-mining:server:DrillIce', function(netId)
+RegisterNetEvent('jc-mining:server:DrillIce', function(netId, clientWaterHash)
     local src = source
 
     if not netId or not Config.IceDrill or not Config.IceDrill.enabled then
@@ -322,25 +432,26 @@ RegisterNetEvent('jc-mining:server:DrillIce', function(netId)
         return
     end
 
-    local rewardItem = Config.IceDrill.rewardItem
+    local drillConfig = Config.IceDrill
+    local rewardItem = drillConfig.rewardItem
 
     if not rewardItem then
         TriggerClientEvent('jc-mining:client:IceDrillFailed', src, Locale:t('ice_drill.no_reward'))
         return
     end
 
-    local maxDurability = Config.IceDrill.durability or 0
+    local maxDurability = drillConfig.durability or 0
     local usesLeft
 
     if maxDurability > 0 then
         usesLeft = drillDurability[netId] or maxDurability
 
         if usesLeft <= 0 then
-            TriggerClientEvent('jc-mining:client:IceDrillFailed', src, Config.IceDrill.brokenMessage or Locale:t('ice_drill.depleted_message'))
+            TriggerClientEvent('jc-mining:client:IceDrillFailed', src, drillConfig.brokenMessage or Locale:t('ice_drill.depleted_message'))
             return
         end
 
-        local loss = Config.IceDrill.durabilityLoss or 1
+        local loss = drillConfig.durabilityLoss or 1
         usesLeft = usesLeft - loss
         if usesLeft < 0 then
             usesLeft = 0
@@ -348,21 +459,7 @@ RegisterNetEvent('jc-mining:server:DrillIce', function(netId)
         drillDurability[netId] = usesLeft
     end
 
-    local rewardAmount = Config.IceDrill.rewardAmount or 1
-    local amount = 1
-
-    if type(rewardAmount) == 'table' then
-        local minAmount = rewardAmount.min or rewardAmount[1] or 1
-        local maxAmount = rewardAmount.max or rewardAmount[2] or minAmount
-
-        if maxAmount < minAmount then
-            maxAmount = minAmount
-        end
-
-        amount = math.random(minAmount, maxAmount)
-    elseif type(rewardAmount) == 'number' then
-        amount = math.max(1, math.floor(rewardAmount))
-    end
+    local amount = resolveAmount(drillConfig.rewardAmount, 1)
 
     if amount > 0 then
         Player.Functions.AddItem(rewardItem, amount)
@@ -373,11 +470,117 @@ RegisterNetEvent('jc-mining:server:DrillIce', function(netId)
         end
     end
 
+    local waterInfo
+    local waterHash = tonumber(clientWaterHash) or 0
+
+    if netId and netId ~= 0 then
+        local entity = NetworkGetEntityFromNetworkId(netId)
+
+        if entity and entity ~= 0 then
+            local coords = GetEntityCoords(entity)
+            local info, hash = getWaterBodyAtCoords(coords)
+
+            if info then
+                waterInfo = info
+                waterHash = hash
+            end
+        end
+    end
+
+    if (not waterInfo or not waterHash or waterHash == 0) then
+        local ped = GetPlayerPed(src)
+
+        if ped and ped ~= 0 then
+            local coords = GetEntityCoords(ped)
+            local info, hash = getWaterBodyAtCoords(coords)
+
+            if info then
+                waterInfo = info
+                waterHash = hash
+            end
+        end
+    end
+
+    if (not waterInfo or not waterHash or waterHash == 0) and clientWaterHash and clientWaterHash ~= 0 then
+        waterInfo = getWaterBodyData(clientWaterHash)
+        waterHash = clientWaterHash
+    end
+
+    local shinyConfig = drillConfig.shinyOre
+
+    if shinyConfig and shinyConfig.item and rollChance(shinyConfig.chance) then
+        local shinyAmount = resolveAmount(shinyConfig.amount, 1)
+
+        if shinyAmount > 0 then
+            Player.Functions.AddItem(shinyConfig.item, shinyAmount, false, shinyConfig.metadata)
+            local shinyInfo = RSGCore.Shared.Items[shinyConfig.item]
+
+            if shinyInfo then
+                TriggerClientEvent('inventory:client:ItemBox', src, shinyInfo, 'add')
+            end
+
+            local message = shinyConfig.notify or Locale:t('ice_drill.found_shiny_ore')
+
+            if shinyConfig.notify then
+                local ok, formatted = pcall(string.format, shinyConfig.notify, shinyAmount)
+                message = ok and formatted or shinyConfig.notify
+            end
+
+            TriggerClientEvent('ox_lib:notify', src, {
+                title = message,
+                type = 'success',
+                duration = 3500
+            })
+        end
+    end
+
+    local fishConfig = drillConfig.fish
+
+    if fishConfig and fishConfig.waters and waterInfo and waterInfo.fishing then
+        if rollChance(fishConfig.chance) then
+            local category = waterInfo.type or 'lake'
+            local pool = fishConfig.waters[category] or fishConfig.waters.default
+
+            if pool and #pool > 0 then
+                local fishEntry = pool[math.random(1, #pool)]
+
+                if fishEntry and fishEntry.item then
+                    local fishAmount = resolveAmount(fishEntry.amount or fishConfig.amount, 1)
+
+                    if fishAmount > 0 then
+                        Player.Functions.AddItem(fishEntry.item, fishAmount, false, fishEntry.metadata)
+                        local fishInfo = RSGCore.Shared.Items[fishEntry.item]
+
+                        if fishInfo then
+                            TriggerClientEvent('inventory:client:ItemBox', src, fishInfo, 'add')
+                        end
+
+                        local label = fishEntry.label or (fishInfo and fishInfo.label) or fishEntry.item
+                        local message
+
+                        if fishConfig.notify then
+                            local ok, formatted = pcall(string.format, fishConfig.notify, label)
+                            message = ok and formatted or fishConfig.notify
+                        else
+                            message = Locale:t('ice_drill.fish_caught', label)
+                        end
+
+                        TriggerClientEvent('ox_lib:notify', src, {
+                            title = message,
+                            type = 'success',
+                            duration = 3500
+                        })
+                    end
+                end
+            end
+        end
+    end
+
     if maxDurability > 0 then
         if usesLeft and usesLeft <= 0 then
             drillDurability[netId] = nil
             TriggerClientEvent('jc-mining:client:IceDrillDepleted', -1, netId)
-            TriggerClientEvent('jc-mining:client:IceDrillFailed', src, Config.IceDrill.brokenMessage or Locale:t('ice_drill.depleted_message'))
+            TriggerClientEvent('jc-mining:client:IceDrillFailed', src, drillConfig.brokenMessage or Locale:t('ice_drill.depleted_message'))
         else
             TriggerClientEvent('ox_lib:notify', src, {
                 title = Locale:t('ice_drill.durability', math.max(usesLeft or maxDurability, 0), maxDurability),

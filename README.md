@@ -11,9 +11,29 @@ https://youtu.be/FLDydwk9LX0
 ## Features
 - Configurable mining that only produces `rock` plus a chance to uncover `shinyore` dirty stones.
 - Pickaxe durability stored in item metadata (default 100, -1 per swing) with automatic replacement when broken.
-- Ice drill durability (default 100, -3 per use) with an ox_target interaction and interact-sound drilling audio.
-- Washing system that requires the player to stand in water, shows a countdown, and converts each shiny ore into a gem based on weighted probabilities (1 stone = 1 gem).
-- Simple configuration for rock yields, shiny ore chances, washing duration, gem table and drill rewards.
+- Ice drill durability (default 100, -3 per use) with an ox_target interaction, interact-sound drilling audio, bonus shiny ore rolls and water-dependent fish catches.
+- Washing system that requires the player to stand in configured RedM water zones, shows a countdown, and converts each shiny ore into a gem based on weighted probabilities (1 stone = 1 gem).
+- Simple configuration for rock yields, shiny ore chances, washing duration, gem table, drill rewards, eligible water bodies and fish loot tables.
+
+## Water bodies & washing
+`Config.WaterBodies` contains the list of RedM water zone hashes (lake, river, creek, pond or swamp) that the script will recognise.
+
+- Every entry automatically allows washing unless `washing = false` is set.
+- The `type` field is used by the ice drill to decide which fish pool to draw from.
+- Zone names must match the values returned by [`_GET_WATER_MAP_ZONE_AT_COORDS`](https://github.com/femga/rdr3_discoveries/blob/master/zones/README.md) (e.g. `WATER_LAKE_ISABELLA`).
+- Players attempting to wash outside of the configured waters will receive an error notification and keep their dirty stone.
+
+## Ice drill extras
+The ice drill rewards can now be extended without touching the main logic:
+
+- `Config.IceDrill.shinyOre` grants a one-in-X chance to obtain extra dirty stones while drilling. Adjust `chance`, `amount`, `metadata` and `notify` as needed.
+- `Config.IceDrill.fish` links water categories to fish loot tables. Each catch entry can override the default amount and metadata, and the optional `notify` string supports `%s` to print the caught fish name.
+
+The default fish configuration expects the following item names (rename them in the config to match your inventory):
+
+`provision_fish_bluegill`, `provision_fish_bullhead_catfish`, `provision_fish_chain_pickerel`, `provision_fish_channel_catfish`, `provision_fish_lake_sturgeon`, `provision_fish_largemouth_bass`, `provision_fish_longnose_gar`, `provision_fish_muskie`, `provision_fish_northern_pike`, `provision_fish_perch`, `provision_fish_redfin_pickerel`, `provision_fish_rock_bass`, `provision_fish_smallmouth_bass`, `provision_fish_sockeye_salmon`, `provision_fish_sockeye_salmon_legendary`, `provision_fish_steelhead_trout`.
+
+Map the fish you want per water type by editing `Config.IceDrill.fish.waters`.
 
 ## Dependencies
 - [rsg-core](https://github.com/)

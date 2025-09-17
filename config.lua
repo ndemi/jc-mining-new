@@ -22,6 +22,49 @@ Config.ShinyOre = {
     foundMessage = nil, -- Override to customise the shiny ore found notification (uses locale when nil)
 }
 
+Config.WaterBodies = {
+    -- Lakes
+    ['WATER_AURORA_BASIN'] = { type = 'lake', washing = true },
+    ['WATER_BARROW_LAGOON'] = { type = 'lake', washing = true },
+    ['WATER_ELYSIAN_POOL'] = { type = 'lake', washing = true },
+    ['WATER_FLAT_IRON_LAKE'] = { type = 'lake', washing = true },
+    ['WATER_HEARTLANDS_OVERFLOW'] = { type = 'lake', washing = true },
+    ['WATER_LAKE_DON_JULIO'] = { type = 'lake', washing = true },
+    ['WATER_LAKE_ISABELLA'] = { type = 'lake', washing = true },
+    ['WATER_O_CREAGHS_RUN'] = { type = 'lake', washing = true },
+    ['WATER_OWANJILA'] = { type = 'lake', washing = true },
+
+    -- Rivers
+    ['WATER_DAKOTA_RIVER'] = { type = 'river', washing = true },
+    ['WATER_KAMASSA_RIVER'] = { type = 'river', washing = true },
+    ['WATER_LANNAHECHEE_RIVER'] = { type = 'river', washing = true },
+    ['WATER_LITTLE_CREEK_RIVER'] = { type = 'river', washing = true },
+    ['WATER_LOWER_MONTANA_RIVER'] = { type = 'river', washing = true },
+    ['WATER_SAN_LUIS_RIVER'] = { type = 'river', washing = true },
+    ['WATER_UPPER_MONTANA_RIVER'] = { type = 'river', washing = true },
+
+    -- Creeks
+    ['WATER_BEARTOOTH_BECK'] = { type = 'creek', washing = true },
+    ['WATER_DEADBOOT_CREEK'] = { type = 'creek', washing = true },
+    ['WATER_DEWBERRY_CREEK'] = { type = 'creek', washing = true },
+    ['WATER_HAWKS_EYE_CREEK'] = { type = 'creek', washing = true },
+    ['WATER_RINGNECK_CREEK'] = { type = 'creek', washing = true },
+    ['WATER_SPIDER_GORGE'] = { type = 'creek', washing = true },
+    ['WATER_STILLWATER_CREEK'] = { type = 'creek', washing = true },
+    ['WATER_WHINYARD_STRAIT'] = { type = 'creek', washing = true },
+
+    -- Ponds & springs
+    ['WATER_CAIRN_LAKE'] = { type = 'pond', washing = true },
+    ['WATER_CATTIAL_POND'] = { type = 'pond', washing = true },
+    ['WATER_HOT_SPRINGS'] = { type = 'pond', washing = true },
+    ['WATER_MATTLOCK_POND'] = { type = 'pond', washing = true },
+    ['WATER_MOONSTONE_POND'] = { type = 'pond', washing = true },
+    ['WATER_SOUTHFIELD_FLATS'] = { type = 'pond', washing = true },
+
+    -- Swamps
+    ['WATER_BAYOU_NWA'] = { type = 'swamp', washing = true },
+}
+
 Config.Washing = {
     item = 'shinyore', -- Item that can be washed when using water
     duration = 7000, -- Duration in milliseconds for washing a shiny ore
@@ -51,7 +94,85 @@ Config.IceDrill = {
     rewardAmount = { min = 1, max = 3 }, -- Amount of ice rewarded per cycle
     durability = 100, -- How many times the drill can be used before breaking (set to 0 for infinite)
     durabilityLoss = 3, -- Durability removed every time the drill is used
-    brokenMessage = nil -- Override to customise the drill broken message (uses locale when nil)
+    brokenMessage = nil, -- Override to customise the drill broken message (uses locale when nil)
+    shinyOre = {
+        item = 'shinyore', -- Bonus reward item dropped while drilling
+        chance = 25, -- One in X chance to find a shiny ore (set to 0 to disable)
+        amount = { min = 1, max = 1 }, -- Amount of shiny ore rewarded when successful
+        metadata = nil, -- Optional metadata table for shiny ore rewards
+        notify = nil, -- Custom notification message (uses locale when nil)
+    },
+    fish = {
+        chance = 18, -- One in X chance to hook a fish while drilling (set to 0 to disable)
+        amount = { min = 1, max = 1 }, -- Default fish item amount
+        notify = nil, -- Custom notification message (uses locale when nil)
+        waters = {
+            lake = {
+                { item = 'provision_fish_bluegill', label = 'Bluegill (Small)', amount = 1 },
+                { item = 'provision_fish_bluegill', label = 'Bluegill (Medium)', amount = 1 },
+                { item = 'provision_fish_largemouth_bass', label = 'Largemouth Bass (Medium)', amount = 1 },
+                { item = 'provision_fish_largemouth_bass', label = 'Largemouth Bass (Large)', amount = 1 },
+                { item = 'provision_fish_lake_sturgeon', label = 'Lake Sturgeon', amount = 1 },
+                { item = 'provision_fish_muskie', label = 'Muskie', amount = 1 },
+                { item = 'provision_fish_northern_pike', label = 'Northern Pike', amount = 1 },
+                { item = 'provision_fish_perch', label = 'Perch (Small)', amount = 1 },
+                { item = 'provision_fish_perch', label = 'Perch (Medium)', amount = 1 },
+                { item = 'provision_fish_rock_bass', label = 'Rock Bass (Small)', amount = 1 },
+                { item = 'provision_fish_rock_bass', label = 'Rock Bass (Medium)', amount = 1 },
+                { item = 'provision_fish_smallmouth_bass', label = 'Smallmouth Bass (Large)', amount = 1 },
+                { item = 'provision_fish_smallmouth_bass', label = 'Smallmouth Bass (Medium)', amount = 1 },
+                { item = 'provision_fish_steelhead_trout', label = 'Rainbow Trout', amount = 1 },
+            },
+            river = {
+                { item = 'provision_fish_bluegill', label = 'Bluegill (Small)', amount = 1 },
+                { item = 'provision_fish_bluegill', label = 'Bluegill (Medium)', amount = 1 },
+                { item = 'provision_fish_bullhead_catfish', label = 'Bullhead Catfish (Small)', amount = 1 },
+                { item = 'provision_fish_bullhead_catfish', label = 'Bullhead Catfish (Medium)', amount = 1 },
+                { item = 'provision_fish_chain_pickerel', label = 'Chain Pickerel (Small)', amount = 1 },
+                { item = 'provision_fish_chain_pickerel', label = 'Chain Pickerel (Medium)', amount = 1 },
+                { item = 'provision_fish_channel_catfish', label = 'Channel Catfish (Large)', amount = 1 },
+                { item = 'provision_fish_channel_catfish', label = 'Channel Catfish (Extra Large)', amount = 1 },
+                { item = 'provision_fish_redfin_pickerel', label = 'Redfin Pickerel (Small)', amount = 1 },
+                { item = 'provision_fish_redfin_pickerel', label = 'Redfin Pickerel (Medium)', amount = 1 },
+                { item = 'provision_fish_smallmouth_bass', label = 'Smallmouth Bass (Medium)', amount = 1 },
+                { item = 'provision_fish_smallmouth_bass', label = 'Smallmouth Bass (Large)', amount = 1 },
+                { item = 'provision_fish_sockeye_salmon', label = 'Sockeye Salmon (Small)', amount = 1 },
+                { item = 'provision_fish_sockeye_salmon', label = 'Sockeye Salmon (Medium)', amount = 1 },
+                { item = 'provision_fish_sockeye_salmon_legendary', label = 'Sockeye Salmon (Large)', amount = 1 },
+                { item = 'provision_fish_steelhead_trout', label = 'Rainbow Trout', amount = 1 },
+            },
+            creek = {
+                { item = 'provision_fish_bluegill', label = 'Bluegill (Small)', amount = 1 },
+                { item = 'provision_fish_chain_pickerel', label = 'Chain Pickerel (Small)', amount = 1 },
+                { item = 'provision_fish_chain_pickerel', label = 'Chain Pickerel (Medium)', amount = 1 },
+                { item = 'provision_fish_redfin_pickerel', label = 'Redfin Pickerel (Small)', amount = 1 },
+                { item = 'provision_fish_redfin_pickerel', label = 'Redfin Pickerel (Medium)', amount = 1 },
+                { item = 'provision_fish_smallmouth_bass', label = 'Smallmouth Bass (Medium)', amount = 1 },
+                { item = 'provision_fish_sockeye_salmon', label = 'Sockeye Salmon (Small)', amount = 1 },
+                { item = 'provision_fish_steelhead_trout', label = 'Rainbow Trout', amount = 1 },
+            },
+            pond = {
+                { item = 'provision_fish_bluegill', label = 'Bluegill (Small)', amount = 1 },
+                { item = 'provision_fish_bluegill', label = 'Bluegill (Medium)', amount = 1 },
+                { item = 'provision_fish_chain_pickerel', label = 'Chain Pickerel (Small)', amount = 1 },
+                { item = 'provision_fish_largemouth_bass', label = 'Largemouth Bass (Medium)', amount = 1 },
+                { item = 'provision_fish_largemouth_bass', label = 'Largemouth Bass (Large)', amount = 1 },
+                { item = 'provision_fish_perch', label = 'Perch (Small)', amount = 1 },
+                { item = 'provision_fish_perch', label = 'Perch (Medium)', amount = 1 },
+                { item = 'provision_fish_rock_bass', label = 'Rock Bass (Small)', amount = 1 },
+                { item = 'provision_fish_rock_bass', label = 'Rock Bass (Medium)', amount = 1 },
+            },
+            swamp = {
+                { item = 'provision_fish_bluegill', label = 'Bluegill (Small)', amount = 1 },
+                { item = 'provision_fish_bluegill', label = 'Bluegill (Medium)', amount = 1 },
+                { item = 'provision_fish_bullhead_catfish', label = 'Bullhead Catfish (Small)', amount = 1 },
+                { item = 'provision_fish_bullhead_catfish', label = 'Bullhead Catfish (Medium)', amount = 1 },
+                { item = 'provision_fish_longnose_gar', label = 'Longnose Gar', amount = 1 },
+                { item = 'provision_fish_rock_bass', label = 'Rock Bass (Small)', amount = 1 },
+                { item = 'provision_fish_rock_bass', label = 'Rock Bass (Medium)', amount = 1 },
+            }
+        }
+    }
 }
 
 Config.IceFields = {

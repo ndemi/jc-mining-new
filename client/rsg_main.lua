@@ -8,6 +8,66 @@ local isInsideDrillOnlyZone = false
 local isWorking = false
 local drillTargetId
 local washingCountdownActive = false
+local WATER_ZONE_NATIVE = 0x5BA7A68A346A5A91
+local waterBodiesByHash
+
+local function cloneTable(tbl)
+    if type(tbl) ~= 'table' then
+        return tbl
+    end
+
+    local copy = {}
+
+    for k, v in pairs(tbl) do
+        copy[k] = v
+    end
+
+    return copy
+end
+
+local function buildWaterBodyLookup()
+    waterBodiesByHash = {}
+
+    if not Config.WaterBodies then
+        return
+    end
+
+    for name, data in pairs(Config.WaterBodies) do
+        if type(name) == 'string' and type(data) == 'table' then
+            local hash = data.hash or joaat(name)
+
+            if hash and hash ~= 0 then
+                local entry = cloneTable(data)
+                entry.hash = hash
+                entry.id = entry.id or name
+                entry.type = entry.type or 'lake'
+                entry.washing = entry.washing ~= false
+                entry.fishing = entry.fishing ~= false
+                waterBodiesByHash[hash] = entry
+            end
+        end
+    end
+end
+
+local function getWaterBodyData(waterHash)
+    if not waterHash or waterHash == 0 then
+        return nil
+    end
+
+    if not waterBodiesByHash then
+        buildWaterBodyLookup()
+    end
+
+    return waterBodiesByHash[waterHash]
+end
+
+local function getWaterHashFromCoords(coords)
+    if not coords then
+        return 0
+    end
+
+    return Citizen.InvokeNative(WATER_ZONE_NATIVE, coords.x, coords.y, coords.z)
+end
 
 local function startWashingCountdown(duration)
     if not lib or not lib.showTextUI then
@@ -253,6 +313,8 @@ RegisterNetEvent('jc-mining:client:StartIceDrilling', function(entity)
 
     local duration = Config.IceDrill.duration or 7000
     local drillNet = NetworkGetNetworkIdFromEntity(drillEntity)
+    local drillCoords = GetEntityCoords(drillEntity)
+    local drillWaterHash = getWaterHashFromCoords(drillCoords)
 
     if Config.IceDrill.soundName then
         TriggerEvent('InteractSound_CL:PlayOnOne', Config.IceDrill.soundName, Config.IceDrill.soundVolume or 0.5)
@@ -283,7 +345,7 @@ RegisterNetEvent('jc-mining:client:StartIceDrilling', function(entity)
     ClearPedTasks(ped)
 
     if success then
-        TriggerServerEvent('jc-mining:server:DrillIce', drillNet)
+        TriggerServerEvent('jc-mining:server:DrillIce', drillNet, drillWaterHash)
     end
 
     isWorking = false
@@ -332,10 +394,16 @@ RegisterNetEvent('jc-mining:client:StartWashing', function()
 
     local ped = PlayerPedId()
     local coords = GetEntityCoords(ped)
-    local currentDistrict = Citizen.InvokeNative(0x43AD8FC02B429D33, coords.x, coords.y, coords.z, 3)
+    local waterHash = getWaterHashFromCoords(coords)
+    local waterInfo = getWaterBodyData(waterHash)
 
-    if not currentDistrict or not IsEntityInWater(ped) then
+    if not IsEntityInWater(ped) then
         lib.notify({ title = Locale:t('error.not_in_water'), type = 'error', duration = 3000 })
+        return
+    end
+
+    if not waterInfo or not waterInfo.washing then
+        lib.notify({ title = Locale:t('error.invalid_water_body'), type = 'error', duration = 3000 })
         return
     end
 
