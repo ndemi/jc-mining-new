@@ -18,7 +18,7 @@ end
 local function formatDurability(current, max)
     current = math.max(current, 0)
     max = math.max(max, 0)
-    return string.format('Wytrzymałość: %d/%d', current, max)
+    return Locale:t('pickaxe.durability', current, max)
 end
 
 local function updatePickaxeMetadata(Player, pickaxe, durability, maxDurability)
@@ -114,7 +114,7 @@ local function handlePickaxeDurability(src)
             end
         end
 
-        local message = Config.PickaxeBrokenMessage or 'Your pickaxe broke!'
+        local message = Config.PickaxeBrokenMessage or Locale:t('pickaxe.broken_message')
 
         TriggerClientEvent('ox_lib:notify', src, {
             title = string.format('%s (%s)', message, formatDurability(0, maxDurability)),
@@ -223,7 +223,7 @@ RegisterNetEvent('jc-mining:server:washShinyOre', function()
 
     if not shinyItem or not Player.Functions.RemoveItem(washing.item, 1, shinyItem.slot) then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Nie masz zabrudzonego kamienia.',
+            title = Locale:t('error.washing_no_dirty_stone'),
             type = 'error',
             duration = 3000
         })
@@ -240,7 +240,7 @@ RegisterNetEvent('jc-mining:server:washShinyOre', function()
 
     if not gemReward or not gemReward.item then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Nie znaleziono żadnych cennych surowców.',
+            title = Locale:t('washing.no_valuable_resources'),
             type = 'error',
             duration = 3000
         })
@@ -256,7 +256,7 @@ RegisterNetEvent('jc-mining:server:washShinyOre', function()
     end
 
     TriggerClientEvent('ox_lib:notify', src, {
-        title = string.format('Otrzymano: %s', gemInfo and gemInfo.label or gemReward.item),
+        title = Locale:t('washing.received_gem', gemInfo and gemInfo.label or gemReward.item),
         type = 'success',
         duration = 3500
     })
@@ -293,9 +293,11 @@ RegisterNetEvent('jc-mining:server:giveitems', function()
                 TriggerClientEvent('inventory:client:ItemBox', src, shinyInfo, 'add')
             end
 
-            if Config.ShinyOre.foundMessage then
+            local shinyMessage = Config.ShinyOre.foundMessage or Locale:t('mining.found_shiny_ore')
+
+            if shinyMessage then
                 TriggerClientEvent('ox_lib:notify', src, {
-                    title = Config.ShinyOre.foundMessage,
+                    title = shinyMessage,
                     type = 'success',
                     duration = 3500
                 })
@@ -310,7 +312,7 @@ RegisterNetEvent('jc-mining:server:DrillIce', function(netId)
     local src = source
 
     if not netId or not Config.IceDrill or not Config.IceDrill.enabled then
-        TriggerClientEvent('jc-mining:client:IceDrillFailed', src, Config.IceDrill and Config.IceDrill.brokenMessage or 'The drill is not operational.')
+        TriggerClientEvent('jc-mining:client:IceDrillFailed', src, (Config.IceDrill and Config.IceDrill.brokenMessage) or Locale:t('ice_drill.failure_default'))
         return
     end
 
@@ -323,7 +325,7 @@ RegisterNetEvent('jc-mining:server:DrillIce', function(netId)
     local rewardItem = Config.IceDrill.rewardItem
 
     if not rewardItem then
-        TriggerClientEvent('jc-mining:client:IceDrillFailed', src, 'No reward configured for the drill.')
+        TriggerClientEvent('jc-mining:client:IceDrillFailed', src, Locale:t('ice_drill.no_reward'))
         return
     end
 
@@ -334,7 +336,7 @@ RegisterNetEvent('jc-mining:server:DrillIce', function(netId)
         usesLeft = drillDurability[netId] or maxDurability
 
         if usesLeft <= 0 then
-            TriggerClientEvent('jc-mining:client:IceDrillFailed', src, Config.IceDrill.brokenMessage or 'The drill has been depleted and needs repairs.')
+            TriggerClientEvent('jc-mining:client:IceDrillFailed', src, Config.IceDrill.brokenMessage or Locale:t('ice_drill.depleted_message'))
             return
         end
 
@@ -375,10 +377,10 @@ RegisterNetEvent('jc-mining:server:DrillIce', function(netId)
         if usesLeft and usesLeft <= 0 then
             drillDurability[netId] = nil
             TriggerClientEvent('jc-mining:client:IceDrillDepleted', -1, netId)
-            TriggerClientEvent('jc-mining:client:IceDrillFailed', src, Config.IceDrill.brokenMessage or 'The drill has been depleted and needs repairs.')
+            TriggerClientEvent('jc-mining:client:IceDrillFailed', src, Config.IceDrill.brokenMessage or Locale:t('ice_drill.depleted_message'))
         else
             TriggerClientEvent('ox_lib:notify', src, {
-                title = string.format('Wytrzymałość wiertła: %d/%d', math.max(usesLeft or maxDurability, 0), maxDurability),
+                title = Locale:t('ice_drill.durability', math.max(usesLeft or maxDurability, 0), maxDurability),
                 type = 'inform',
                 duration = 2500
             })

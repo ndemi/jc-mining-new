@@ -4,6 +4,7 @@ game 'rdr3'
 
 shared_scripts {
     '@ox_lib/init.lua',
+    'locale.lua',
     'config.lua'
 }
 
