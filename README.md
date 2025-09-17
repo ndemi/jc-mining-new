@@ -13,7 +13,9 @@ https://youtu.be/FLDydwk9LX0
 - Pickaxe durability stored in item metadata (default 100, -1 per swing) with automatic replacement when broken.
 - Ice drill durability (default 100, -3 per use) with an ox_target interaction, interact-sound drilling audio, bonus shiny ore rolls and water-dependent fish catches.
 - Washing system that requires the player to stand in configured RedM water zones, shows a countdown, and converts each shiny ore into a gem based on weighted probabilities (1 stone = 1 gem).
-- Simple configuration for rock yields, shiny ore chances, washing duration, gem table, drill rewards, eligible water bodies and fish loot tables.
+- Simple configuration for rock yields, shiny ore and pyrite chances, washing duration, gem table, drill rewards, eligible water bodies and fish loot tables.
+- Optional mining target points powered by ox_target to guide players to the correct dig spots.
+- Fully RSG Core driven notifications for durability updates, resource finds and tool swaps.
 
 ## Water bodies & washing
 `Config.WaterBodies` contains the list of RedM water zone hashes (lake, river, creek, pond or swamp) that the script will recognise.
@@ -28,6 +30,8 @@ The ice drill rewards can now be extended without touching the main logic:
 
 - `Config.IceDrill.shinyOre` grants a one-in-X chance to obtain extra dirty stones while drilling. Adjust `chance`, `amount`, `metadata` and `notify` as needed.
 - `Config.IceDrill.fish` links water categories to fish loot tables. Each catch entry can override the default amount and metadata, and the optional `notify` string supports `%s` to print the caught fish name.
+- `Config.IceDrill.toolItem` enables drill tool durability identical to the pickaxe and swaps the tool to `replacementItem` when it breaks.
+- `Config.MiningTargets` provides ox_target spheres so players can trigger mining at pre-defined rock faces.
 
 The default fish configuration expects the following item names (rename them in the config to match your inventory):
 
@@ -51,6 +55,7 @@ Below is a minimal item list needed for the new workflow. Adjust weights and ima
 -- Mining and washing
 ['rock']      = { name = 'rock',      label = 'Rock',               weight = 100, type = 'item', image = 'rock.png',      unique = false, useable = false, shouldClose = false, description = 'A chunk of stone fresh from the mine.' },
 ['shinyore']  = { name = 'shinyore',  label = 'Zabrudzony kamień',  weight = 250, type = 'item', image = 'shinyore.png',  unique = false, useable = true,  shouldClose = true,  description = 'Kryje w sobie coś wartościowego… albo i nie.' },
+['pyrite']    = { name = 'pyrite',    label = 'Pyrite',            weight = 150, type = 'item', image = 'pyrite.png',     unique = false, useable = false, shouldClose = false, description = 'Often mistaken for gold but still valuable to traders.' },
 
 -- Gems (sample table used by Config.Washing.gems)
 ['diamond']     = { name = 'diamond',     label = 'Diamond',        weight = 100, type = 'item', image = 'diamond.png',     unique = false, useable = false, shouldClose = false, description = 'A beautiful gem used for fine jewellery.' },
@@ -67,6 +72,8 @@ Below is a minimal item list needed for the new workflow. Adjust weights and ima
 -- Tools
 ['pickaxe']          = { name = 'pickaxe',          label = 'Pickaxe',          weight = 100, type = 'item', image = 'pickaxe.png',      unique = true,  useable = true,  shouldClose = true,  description = 'Essential for breaking apart rock faces.' },
 ['broken_pickaxe']   = { name = 'broken_pickaxe',   label = 'Broken Pickaxe',   weight = 100, type = 'item', image = 'broken_pickaxe.png', unique = false, useable = false, shouldClose = false, description = 'Remains of a shattered pickaxe.' },
+['drill']            = { name = 'drill',            label = 'Ice Drill',        weight = 100, type = 'item', image = 'drill.png',        unique = true,  useable = false, shouldClose = false, description = 'Required to operate fixed drilling rigs.' },
+['broken_drill']     = { name = 'broken_drill',     label = 'Broken Drill',     weight = 100, type = 'item', image = 'broken_drill.png', unique = false, useable = false, shouldClose = false, description = 'A drill that needs repairs before it can cut ice again.' },
 ['ice']              = { name = 'ice',              label = 'Ice Chunk',        weight = 100, type = 'item', image = 'ice.png',          unique = false, useable = false, shouldClose = false, description = 'Freshly drilled ice.' }
 ```
 

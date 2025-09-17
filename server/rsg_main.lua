@@ -4,6 +4,14 @@ local WATER_ZONE_NATIVE = 0x5BA7A68A346A5A91
 local waterBodiesByHash
 local waterBodiesByName
 
+local function sendNotification(src, message, notifType, duration)
+    if not src or not message then
+        return
+    end
+
+    TriggerClientEvent('RSGCore:Notify', src, message, notifType or 'primary', duration or 3000)
+end
+
 local function cloneTable(tbl)
     if not tbl then
         return {}
@@ -117,10 +125,10 @@ local function getWaterBodyAtCoords(coords)
     return info, hash
 end
 
-local function formatDurability(current, max)
-    current = math.max(current, 0)
-    max = math.max(max, 0)
-    return Locale:t('pickaxe.durability', current, max)
+local function formatDurability(current, max, localeKey)
+    current = math.max(current or 0, 0)
+    max = math.max(max or 0, 0)
+    return Locale:t(localeKey or 'pickaxe.durability', current, max)
 end
 
 local function updatePickaxeMetadata(Player, pickaxe, durability, maxDurability)
@@ -131,10 +139,25 @@ local function updatePickaxeMetadata(Player, pickaxe, durability, maxDurability)
     local info = cloneTable(pickaxe.info)
     info.durability = durability
     info.maxDurability = maxDurability
-    info.meta = formatDurability(durability, maxDurability)
+    info.meta = formatDurability(durability, maxDurability, 'pickaxe.durability')
 
     if Player.Functions.RemoveItem(Config.Pickaxe, 1, pickaxe.slot) then
         Player.Functions.AddItem(Config.Pickaxe, 1, pickaxe.slot, info)
+    end
+end
+
+local function updateDrillToolMetadata(Player, toolItem, tool, durability, maxDurability)
+    if not Player or not toolItem or not tool then
+        return
+    end
+
+    local info = cloneTable(tool.info)
+    info.durability = durability
+    info.maxDurability = maxDurability
+    info.meta = formatDurability(durability, maxDurability, 'ice_drill.tool_durability')
+
+    if Player.Functions.RemoveItem(toolItem, 1, tool.slot) then
+        Player.Functions.AddItem(toolItem, 1, tool.slot, info)
     end
 end
 
@@ -217,21 +240,123 @@ local function handlePickaxeDurability(src)
         end
 
         local message = Config.PickaxeBrokenMessage or Locale:t('pickaxe.broken_message')
+        local durabilityLabel = formatDurability(0, maxDurability, 'pickaxe.durability')
 
-        TriggerClientEvent('ox_lib:notify', src, {
-            title = string.format('%s (%s)', message, formatDurability(0, maxDurability)),
-            type = 'error',
-            duration = 4000
-        })
+        sendNotification(src, string.format('%s (%s)', message, durabilityLabel), 'error', 4000)
     else
         updatePickaxeMetadata(Player, pickaxe, newDurability, maxDurability)
 
-        TriggerClientEvent('ox_lib:notify', src, {
-            title = formatDurability(newDurability, maxDurability),
-            type = 'inform',
-            duration = 2500
-        })
+        sendNotification(src, formatDurability(newDurability, maxDurability, 'pickaxe.durability'), 'primary', 2500)
     end
+end
+
+local function ensureDrillToolDurability(src)
+    local drillConfig = Config.IceDrill
+
+    if not drillConfig or not drillConfig.toolItem then
+        return
+    end
+
+    local maxDurability = drillConfig.toolDurability or 0
+
+    if maxDurability <= 0 then
+        return
+    end
+
+    local Player = RSGCore.Functions.GetPlayer(src)
+
+    if not Player then
+        return
+    end
+
+    local tool = Player.Functions.GetItemByName(drillConfig.toolItem)
+
+    if not tool then
+        return
+    end
+
+    local currentDurability = tool.info and tool.info.durability or maxDurability
+
+    if currentDurability > maxDurability then
+        currentDurability = maxDurability
+    end
+
+    local storedMax = tool.info and tool.info.maxDurability or maxDurability
+    local hasMeta = tool.info and tool.info.meta
+
+    if storedMax ~= maxDurability or not hasMeta or not tool.info.durability then
+        updateDrillToolMetadata(Player, drillConfig.toolItem, tool, currentDurability, maxDurability)
+    end
+end
+
+local function handleDrillToolDurability(src)
+    local drillConfig = Config.IceDrill
+
+    if not drillConfig or not drillConfig.toolItem then
+        return true
+    end
+
+    local maxDurability = drillConfig.toolDurability or 0
+
+    if maxDurability <= 0 then
+        return true
+    end
+
+    local Player = RSGCore.Functions.GetPlayer(src)
+
+    if not Player then
+        return false
+    end
+
+    local tool = Player.Functions.GetItemByName(drillConfig.toolItem)
+
+    if not tool then
+        return false
+    end
+
+    local currentDurability = tool.info and tool.info.durability or maxDurability
+    local loss = drillConfig.toolDurabilityLoss or 1
+    local newDurability = currentDurability - loss
+
+    if newDurability <= 0 then
+        if Player.Functions.RemoveItem(drillConfig.toolItem, 1, tool.slot) then
+            local toolInfo = RSGCore.Shared.Items[drillConfig.toolItem]
+
+            if toolInfo then
+                TriggerClientEvent('inventory:client:ItemBox', src, toolInfo, 'remove')
+            end
+        end
+
+        if drillConfig.replacementItem then
+            Player.Functions.AddItem(drillConfig.replacementItem, 1, false, drillConfig.replacementMetadata)
+            local replacementInfo = RSGCore.Shared.Items[drillConfig.replacementItem]
+
+            if replacementInfo then
+                TriggerClientEvent('inventory:client:ItemBox', src, replacementInfo, 'add')
+            end
+
+            local label = (replacementInfo and replacementInfo.label) or drillConfig.replacementItem
+            local message = drillConfig.replacementNotify
+
+            if message then
+                local ok, formatted = pcall(string.format, message, label)
+                message = ok and formatted or message
+            else
+                message = Locale:t('ice_drill.replacement_received', label)
+            end
+
+            sendNotification(src, message, 'primary', 4000)
+        end
+
+        local brokenMessage = drillConfig.toolBrokenMessage or Locale:t('ice_drill.tool_broken')
+        local durabilityLabel = formatDurability(0, maxDurability, 'ice_drill.tool_durability')
+        sendNotification(src, string.format('%s (%s)', brokenMessage, durabilityLabel), 'error', 4000)
+        return false
+    end
+
+    updateDrillToolMetadata(Player, drillConfig.toolItem, tool, newDurability, maxDurability)
+    sendNotification(src, formatDurability(newDurability, maxDurability, 'ice_drill.tool_durability'), 'primary', 2500)
+    return true
 end
 
 local function getRockRewardAmount()
@@ -277,6 +402,82 @@ local function selectGemReward()
     return washing.gems[#washing.gems]
 end
 
+RSGCore.Functions.CreateCallback('jc-mining:server:CanMine', function(source, cb)
+    local Player = RSGCore.Functions.GetPlayer(source)
+
+    if not Player then
+        cb(false)
+        return
+    end
+
+    ensurePickaxeDurability(source)
+
+    local pickaxe = Player.Functions.GetItemByName(Config.Pickaxe)
+
+    if not pickaxe then
+        cb(false, Locale:t('error.no_pickaxe'))
+        return
+    end
+
+    local maxDurability = Config.PickaxeDurability or 0
+
+    if maxDurability > 0 then
+        pickaxe = Player.Functions.GetItemByName(Config.Pickaxe)
+        local currentDurability = pickaxe and pickaxe.info and pickaxe.info.durability or maxDurability
+
+        if currentDurability <= 0 then
+            cb(false, Locale:t('error.pickaxe_broken'))
+            return
+        end
+    end
+
+    cb(true)
+end)
+
+RSGCore.Functions.CreateCallback('jc-mining:server:CanDrill', function(source, cb)
+    local drillConfig = Config.IceDrill
+
+    if not drillConfig or not drillConfig.enabled then
+        cb(false, Locale:t('error.ice_drilling_unavailable'))
+        return
+    end
+
+    if not drillConfig.toolItem then
+        cb(true)
+        return
+    end
+
+    local Player = RSGCore.Functions.GetPlayer(source)
+
+    if not Player then
+        cb(false, Locale:t('error.ice_drilling_unavailable'))
+        return
+    end
+
+    ensureDrillToolDurability(source)
+
+    local tool = Player.Functions.GetItemByName(drillConfig.toolItem)
+
+    if not tool then
+        cb(false, Locale:t('error.no_drill_tool'))
+        return
+    end
+
+    local maxDurability = drillConfig.toolDurability or 0
+
+    if maxDurability > 0 then
+        tool = Player.Functions.GetItemByName(drillConfig.toolItem)
+        local currentDurability = tool and tool.info and tool.info.durability or maxDurability
+
+        if currentDurability <= 0 then
+            cb(false, Locale:t('error.drill_tool_broken'))
+            return
+        end
+    end
+
+    cb(true)
+end)
+
 RSGCore.Functions.CreateUseableItem(Config.Pickaxe, function(source)
     ensurePickaxeDurability(source)
     TriggerClientEvent('jc-mining:client:StartMining', source)
@@ -309,11 +510,7 @@ RegisterNetEvent('jc-mining:server:washShinyOre', function()
     end
 
     if not IsEntityInWater(ped) then
-        TriggerClientEvent('ox_lib:notify', src, {
-            title = Locale:t('error.not_in_water'),
-            type = 'error',
-            duration = 3000
-        })
+        sendNotification(src, Locale:t('error.not_in_water'), 'error', 3000)
         return
     end
 
@@ -321,22 +518,14 @@ RegisterNetEvent('jc-mining:server:washShinyOre', function()
     local waterInfo = select(1, getWaterBodyAtCoords(coords))
 
     if not waterInfo or not waterInfo.washing then
-        TriggerClientEvent('ox_lib:notify', src, {
-            title = Locale:t('error.invalid_water_body'),
-            type = 'error',
-            duration = 3000
-        })
+        sendNotification(src, Locale:t('error.invalid_water_body'), 'error', 3000)
         return
     end
 
     local shinyItem = Player.Functions.GetItemByName(washing.item)
 
     if not shinyItem or not Player.Functions.RemoveItem(washing.item, 1, shinyItem.slot) then
-        TriggerClientEvent('ox_lib:notify', src, {
-            title = Locale:t('error.washing_no_dirty_stone'),
-            type = 'error',
-            duration = 3000
-        })
+        sendNotification(src, Locale:t('error.washing_no_dirty_stone'), 'error', 3000)
         return
     end
 
@@ -349,15 +538,17 @@ RegisterNetEvent('jc-mining:server:washShinyOre', function()
     local gemReward = selectGemReward()
 
     if not gemReward or not gemReward.item then
-        TriggerClientEvent('ox_lib:notify', src, {
-            title = Locale:t('washing.no_valuable_resources'),
-            type = 'error',
-            duration = 3000
-        })
+        sendNotification(src, Locale:t('washing.no_valuable_resources'), 'error', 3000)
         return
     end
 
-    Player.Functions.AddItem(gemReward.item, 1, false, gemReward.metadata)
+    local gemAmount = resolveAmount(gemReward.amount, 1)
+
+    if gemAmount < 1 then
+        gemAmount = 1
+    end
+
+    Player.Functions.AddItem(gemReward.item, gemAmount, false, gemReward.metadata)
 
     local gemInfo = RSGCore.Shared.Items[gemReward.item]
 
@@ -365,11 +556,8 @@ RegisterNetEvent('jc-mining:server:washShinyOre', function()
         TriggerClientEvent('inventory:client:ItemBox', src, gemInfo, 'add')
     end
 
-    TriggerClientEvent('ox_lib:notify', src, {
-        title = Locale:t('washing.received_gem', gemInfo and gemInfo.label or gemReward.item),
-        type = 'success',
-        duration = 3500
-    })
+    local label = (gemInfo and gemInfo.label) or gemReward.item
+    sendNotification(src, Locale:t('washing.received_gem', gemAmount, label), 'success', 3500)
 end)
 
 RegisterNetEvent('jc-mining:server:giveitems', function()
@@ -387,31 +575,71 @@ RegisterNetEvent('jc-mining:server:giveitems', function()
         Player.Functions.AddItem(rockItem, rockAmount)
 
         local itemInfo = RSGCore.Shared.Items[rockItem]
+        local rockLabel = (itemInfo and itemInfo.label) or rockItem
 
         if itemInfo then
             TriggerClientEvent('inventory:client:ItemBox', src, itemInfo, 'add')
         end
+
+        sendNotification(src, Locale:t('mining.received_rock', rockAmount, rockLabel), 'success', 3000)
     end
 
-    if Config.ShinyOre and Config.ShinyOre.item and Config.ShinyOre.chancePerHit and Config.ShinyOre.chancePerHit > 0 then
-        if math.random(1, Config.ShinyOre.chancePerHit) == 1 then
-            Player.Functions.AddItem(Config.ShinyOre.item, 1, false, Config.ShinyOre.metadata)
+    local shinyConfig = Config.ShinyOre
 
-            local shinyInfo = RSGCore.Shared.Items[Config.ShinyOre.item]
+    if shinyConfig and shinyConfig.item then
+        local chance = shinyConfig.chance or shinyConfig.chancePerHit
 
-            if shinyInfo then
-                TriggerClientEvent('inventory:client:ItemBox', src, shinyInfo, 'add')
+        if rollChance(chance) then
+            local shinyAmount = resolveAmount(shinyConfig.amount, 1)
+
+            if shinyAmount > 0 then
+                Player.Functions.AddItem(shinyConfig.item, shinyAmount, false, shinyConfig.metadata)
+
+                local shinyInfo = RSGCore.Shared.Items[shinyConfig.item]
+
+                if shinyInfo then
+                    TriggerClientEvent('inventory:client:ItemBox', src, shinyInfo, 'add')
+                end
+
+                local label = (shinyInfo and shinyInfo.label) or shinyConfig.item
+                local message
+
+                if shinyConfig.foundMessage then
+                    local ok, formatted = pcall(string.format, shinyConfig.foundMessage, shinyAmount, label)
+                    message = ok and formatted or shinyConfig.foundMessage
+                else
+                    message = Locale:t('mining.found_shiny_ore', shinyAmount, label)
+                end
+
+                sendNotification(src, message, 'success', 3500)
+            end
+        end
+    end
+
+    local pyriteConfig = Config.Pyrite
+
+    if pyriteConfig and pyriteConfig.item and rollChance(pyriteConfig.chance) then
+        local pyriteAmount = resolveAmount(pyriteConfig.amount, 1)
+
+        if pyriteAmount > 0 then
+            Player.Functions.AddItem(pyriteConfig.item, pyriteAmount, false, pyriteConfig.metadata)
+            local pyriteInfo = RSGCore.Shared.Items[pyriteConfig.item]
+
+            if pyriteInfo then
+                TriggerClientEvent('inventory:client:ItemBox', src, pyriteInfo, 'add')
             end
 
-            local shinyMessage = Config.ShinyOre.foundMessage or Locale:t('mining.found_shiny_ore')
+            local label = (pyriteInfo and pyriteInfo.label) or pyriteConfig.item
+            local message
 
-            if shinyMessage then
-                TriggerClientEvent('ox_lib:notify', src, {
-                    title = shinyMessage,
-                    type = 'success',
-                    duration = 3500
-                })
+            if pyriteConfig.notify then
+                local ok, formatted = pcall(string.format, pyriteConfig.notify, pyriteAmount, label)
+                message = ok and formatted or pyriteConfig.notify
+            else
+                message = Locale:t('mining.found_pyrite', pyriteAmount, label)
             end
+
+            sendNotification(src, message, 'success', 3500)
         end
     end
 
@@ -464,10 +692,13 @@ RegisterNetEvent('jc-mining:server:DrillIce', function(netId, clientWaterHash)
     if amount > 0 then
         Player.Functions.AddItem(rewardItem, amount)
         local rewardInfo = RSGCore.Shared.Items[rewardItem]
+        local rewardLabel = (rewardInfo and rewardInfo.label) or rewardItem
 
         if rewardInfo then
             TriggerClientEvent('inventory:client:ItemBox', src, rewardInfo, 'add')
         end
+
+        sendNotification(src, Locale:t('ice_drill.ice_reward', amount, rewardLabel), 'success', 3000)
     end
 
     local waterInfo
@@ -519,18 +750,17 @@ RegisterNetEvent('jc-mining:server:DrillIce', function(netId, clientWaterHash)
                 TriggerClientEvent('inventory:client:ItemBox', src, shinyInfo, 'add')
             end
 
-            local message = shinyConfig.notify or Locale:t('ice_drill.found_shiny_ore')
+            local label = (shinyInfo and shinyInfo.label) or shinyConfig.item
+            local message
 
             if shinyConfig.notify then
-                local ok, formatted = pcall(string.format, shinyConfig.notify, shinyAmount)
+                local ok, formatted = pcall(string.format, shinyConfig.notify, shinyAmount, label)
                 message = ok and formatted or shinyConfig.notify
+            else
+                message = Locale:t('ice_drill.found_shiny_ore', shinyAmount, label)
             end
 
-            TriggerClientEvent('ox_lib:notify', src, {
-                title = message,
-                type = 'success',
-                duration = 3500
-            })
+            sendNotification(src, message, 'success', 3500)
         end
     end
 
@@ -559,22 +789,20 @@ RegisterNetEvent('jc-mining:server:DrillIce', function(netId, clientWaterHash)
                         local message
 
                         if fishConfig.notify then
-                            local ok, formatted = pcall(string.format, fishConfig.notify, label)
+                            local ok, formatted = pcall(string.format, fishConfig.notify, fishAmount, label)
                             message = ok and formatted or fishConfig.notify
                         else
-                            message = Locale:t('ice_drill.fish_caught', label)
+                            message = Locale:t('ice_drill.fish_caught', fishAmount, label)
                         end
 
-                        TriggerClientEvent('ox_lib:notify', src, {
-                            title = message,
-                            type = 'success',
-                            duration = 3500
-                        })
+                        sendNotification(src, message, 'success', 3500)
                     end
                 end
             end
         end
     end
+
+    handleDrillToolDurability(src)
 
     if maxDurability > 0 then
         if usesLeft and usesLeft <= 0 then
@@ -582,11 +810,7 @@ RegisterNetEvent('jc-mining:server:DrillIce', function(netId, clientWaterHash)
             TriggerClientEvent('jc-mining:client:IceDrillDepleted', -1, netId)
             TriggerClientEvent('jc-mining:client:IceDrillFailed', src, drillConfig.brokenMessage or Locale:t('ice_drill.depleted_message'))
         else
-            TriggerClientEvent('ox_lib:notify', src, {
-                title = Locale:t('ice_drill.durability', math.max(usesLeft or maxDurability, 0), maxDurability),
-                type = 'inform',
-                duration = 2500
-            })
+            sendNotification(src, Locale:t('ice_drill.durability', math.max(usesLeft or maxDurability, 0), maxDurability), 'primary', 2500)
         end
     end
 end)
