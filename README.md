@@ -24,14 +24,14 @@ JC-Mining is a more advanced mining script created with capability for both RSG 
 ***For RSG***
 - rsg-core
 - PolyZone
-- ox_lib
+- ox_lib (optional, provides text UI and progress feedback when installed)
 - ox_target (optional, enables third-eye drill interactions)
 
 ***For Vorp***
 - vorp-core
 - vorp_progressbar
 - PolyZone
-- ox_lib
+- ox_lib (optional, provides text UI enhancements when installed)
 - ox_target (optional, enables third-eye drill interactions)
 
 ## Configuration Highlights

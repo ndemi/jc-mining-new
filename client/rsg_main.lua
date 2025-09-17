@@ -6,6 +6,122 @@ if Config.Framework == 'RSG' then
     local activeDrillZones = {}
     local usingDrillTarget = false
     local drillTargetId = nil
+    local oxLib = nil
+
+    local function ensureOxLib()
+        if oxLib then
+            return oxLib
+        end
+
+        if not GetResourceState then
+            return nil
+        end
+
+        local state = GetResourceState('ox_lib')
+
+        if state ~= 'started' and state ~= 'starting' then
+            return nil
+        end
+
+        local ok, result = pcall(function()
+            return exports.ox_lib
+        end)
+
+        if ok and result then
+            oxLib = result
+            return oxLib
+        end
+
+        return nil
+    end
+
+    local function notifyPlayer(message, messageType, duration)
+        duration = duration or 3000
+        local libInstance = ensureOxLib()
+
+        if libInstance then
+            local success = pcall(function()
+                libInstance:notify({
+                    title = message,
+                    type = messageType or 'inform',
+                    duration = duration
+                })
+            end)
+
+            if success then
+                return
+            end
+        end
+
+        if RSGCore and RSGCore.Functions and RSGCore.Functions.Notify then
+            RSGCore.Functions.Notify(message, messageType or 'inform', duration)
+        else
+            print(('[jc-mining] %s'):format(message))
+        end
+    end
+
+    local function showPromptText(text)
+        if drillPromptVisible then
+            return
+        end
+
+        local prompt = text or 'Press [E] to drill for ice'
+        local libInstance = ensureOxLib()
+
+        if libInstance then
+            local success = pcall(function()
+                libInstance:showTextUI(prompt)
+            end)
+
+            if success then
+                drillPromptVisible = true
+                return
+            end
+        end
+
+        notifyPlayer(prompt, 'inform', 2000)
+        drillPromptVisible = true
+    end
+
+    local function hidePromptText()
+        if not drillPromptVisible then
+            return
+        end
+
+        local libInstance = ensureOxLib()
+
+        if libInstance then
+            pcall(function()
+                libInstance:hideTextUI()
+            end)
+        end
+
+        drillPromptVisible = false
+    end
+
+    local function progressBar(options)
+        local libInstance = ensureOxLib()
+
+        if libInstance then
+            local ok, result = pcall(function()
+                return libInstance:progressBar(options)
+            end)
+
+            if ok then
+                if result == nil then
+                    return true
+                end
+
+                return result
+            end
+        end
+
+        if options and options.duration and options.duration > 0 then
+            Wait(options.duration)
+        end
+
+        return true
+    end
 
     local function hasDrillZones()
         return Config.IceDrill and type(Config.IceDrill.zones) == 'table' and next(Config.IceDrill.zones) ~= nil
@@ -28,23 +144,11 @@ if Config.Framework == 'RSG' then
             return
         end
 
-        if lib and lib.showTextUI then
-            lib.showTextUI(Config.IceDrill.prompt or 'Press [E] to drill for ice')
-        end
-
-        drillPromptVisible = true
+        showPromptText(Config.IceDrill.prompt or 'Press [E] to drill for ice')
     end
 
     local function hideDrillPrompt()
-        if not drillPromptVisible then
-            return
-        end
-
-        if lib and lib.hideTextUI then
-            lib.hideTextUI()
-        end
-
-        drillPromptVisible = false
+        hidePromptText()
     end
 
     local function registerDrillTarget()
@@ -216,12 +320,12 @@ if Config.Framework == 'RSG' then
     
     RegisterNetEvent('jc-mining:client:StartMining', function()
         if not mineType then
-            lib.notify({ title = 'You\'re not inside a mine!', type = 'error', duration = 3000 })
+            notifyPlayer("You're not inside a mine!", 'error')
             return
         end
 
         if isWorking then
-            lib.notify({ title = 'You\'re already doing something!', type = 'error', duration = 3000 })
+            notifyPlayer("You're already doing something!", 'error')
             return
         end
 
@@ -252,12 +356,12 @@ if Config.Framework == 'RSG' then
     
     RegisterNetEvent('jc-mining:client:StartIceDrilling', function()
         if isWorking then
-            lib.notify({ title = 'You\'re already doing something!', type = 'error', duration = 3000 })
+            notifyPlayer("You're already doing something!", 'error')
             return
         end
 
         if not Config.IceDrill or not Config.IceDrill.enabled then
-            lib.notify({ title = 'Ice drilling is not available.', type = 'error', duration = 3000 })
+            notifyPlayer('Ice drilling is not available.', 'error')
             return
         end
 
@@ -266,17 +370,14 @@ if Config.Framework == 'RSG' then
         local drill = GetClosestObjectOfType(coords.x, coords.y, coords.z, Config.IceDrill.interactionDistance or 2.0, GetHashKey(Config.IceDrill.prop), false, false, false)
 
         if drill == 0 then
-            lib.notify({ title = 'You need to be near a drill.', type = 'error', duration = 3000 })
+            notifyPlayer('You need to be near a drill.', 'error')
             return
         end
 
         hideDrillPrompt()
 
         if not isPlayerInDrillZone() then
-            if lib and lib.notify then
-                lib.notify({ title = 'You need to be inside a drill site.', type = 'error', duration = 3000 })
-            end
-
+            notifyPlayer('You need to be inside a drill site.', 'error')
             return
         end
 
@@ -292,7 +393,7 @@ if Config.Framework == 'RSG' then
         local duration = Config.IceDrill.duration or 7000
         local drillNet = NetworkGetNetworkIdFromEntity(drill)
 
-        if lib.progressBar({
+        if progressBar({
             duration = duration,
             position = 'bottom',
             useWhileDead = false,
@@ -321,7 +422,7 @@ if Config.Framework == 'RSG' then
     RegisterNetEvent('jc-mining:client:IceDrillFailed', function(message)
         isWorking = false
         hideDrillPrompt()
-        lib.notify({ title = message or 'The drill is not operational.', type = 'error', duration = 3000 })
+        notifyPlayer(message or 'The drill is not operational.', 'error')
     end)
 
     RegisterNetEvent('jc-mining:client:IceDrillDepleted', function(netId)
@@ -350,12 +451,12 @@ if Config.Framework == 'RSG' then
             local x,y,z =  table.unpack(GetEntityCoords(PlayerPedId()))
             local current_district = Citizen.InvokeNative(0x43AD8FC02B429D33, x, y, z, 3)
             if current_district then
-                if not IsEntityInWater(PlayerPedId()) then 
-                    lib.notify({ title = 'You\'re not in any river!', type = 'error', duration = 3000 })
-                    working = false;
-                    return 
-                end         
-                if lib.progressBar({
+                if not IsEntityInWater(PlayerPedId()) then
+                    notifyPlayer("You're not in any river!", 'error')
+                    isWorking = false
+                    return
+                end
+                if progressBar({
                     duration = 5000,
                     position = 'bottom',
                     useWhileDead = false,
@@ -377,10 +478,10 @@ if Config.Framework == 'RSG' then
                     isWorking = false
                 end
             else
-                lib.notify({ title = 'You\'re not at any river!', type = 'error', duration = 3000 })
+                notifyPlayer("You're not at any river!", 'error')
             end
         else
-            lib.notify({ title = 'You\'re already doing something!', type = 'error', duration = 3000 })
+            notifyPlayer("You're already doing something!", 'error')
         end
     end)
 

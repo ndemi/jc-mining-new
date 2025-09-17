@@ -6,6 +6,73 @@ if Config.Framework == 'VORP' then
     local activeDrillZones = {}
     local usingDrillTarget = false
     local drillTargetId = nil
+    local oxLib = nil
+
+    local function ensureOxLib()
+        if oxLib then
+            return oxLib
+        end
+
+        if not GetResourceState then
+            return nil
+        end
+
+        local state = GetResourceState('ox_lib')
+
+        if state ~= 'started' and state ~= 'starting' then
+            return nil
+        end
+
+        local ok, result = pcall(function()
+            return exports.ox_lib
+        end)
+
+        if ok and result then
+            oxLib = result
+            return oxLib
+        end
+
+        return nil
+    end
+
+    local function showPromptText(text)
+        if drillPromptVisible then
+            return
+        end
+
+        local prompt = text or 'Press [E] to drill for ice'
+        local libInstance = ensureOxLib()
+
+        if libInstance then
+            local success = pcall(function()
+                libInstance:showTextUI(prompt)
+            end)
+
+            if success then
+                drillPromptVisible = true
+                return
+            end
+        end
+
+        VORPcore.NotifyCenter(prompt, 2000)
+        drillPromptVisible = true
+    end
+
+    local function hidePromptText()
+        if not drillPromptVisible then
+            return
+        end
+
+        local libInstance = ensureOxLib()
+
+        if libInstance then
+            pcall(function()
+                libInstance:hideTextUI()
+            end)
+        end
+
+        drillPromptVisible = false
+    end
 
     local function hasDrillZones()
         return Config.IceDrill and type(Config.IceDrill.zones) == 'table' and next(Config.IceDrill.zones) ~= nil
@@ -28,23 +95,11 @@ if Config.Framework == 'VORP' then
             return
         end
 
-        if lib and lib.showTextUI then
-            lib.showTextUI(Config.IceDrill.prompt or 'Press [E] to drill for ice')
-        end
-
-        drillPromptVisible = true
+        showPromptText(Config.IceDrill.prompt or 'Press [E] to drill for ice')
     end
 
     local function hideDrillPrompt()
-        if not drillPromptVisible then
-            return
-        end
-
-        if lib and lib.hideTextUI then
-            lib.hideTextUI()
-        end
-
-        drillPromptVisible = false
+        hidePromptText()
     end
 
     local function registerDrillTarget()

@@ -55,11 +55,7 @@ if Config.Framework == 'RSG' then
                 end
             end
 
-            TriggerClientEvent('ox_lib:notify', src, {
-                title = Config.PickaxeBrokenMessage or 'Your pickaxe broke!',
-                type = 'error',
-                duration = 3000
-            })
+            TriggerClientEvent('RSGCore:Notify', src, Config.PickaxeBrokenMessage or 'Your pickaxe broke!', 'error')
         else
             pickaxeDurability[src] = usesLeft
         end
@@ -139,7 +135,7 @@ if Config.Framework == 'RSG' then
                     TriggerClientEvent('inventory:client:ItemBox', src, itemInfo, 'add')
                 end
             else
-                TriggerClientEvent('ox_lib:notify', src, { title = 'You didn\'t get anything!', type = 'error', duration = 3000 })
+                TriggerClientEvent('RSGCore:Notify', src, "You didn't get anything!", 'error')
             end
         elseif mineType == 'rare' then
             if chance <= Config.RareChance then
@@ -152,7 +148,7 @@ if Config.Framework == 'RSG' then
                     TriggerClientEvent('inventory:client:ItemBox', src, itemInfo, 'add')
                 end
             else
-                TriggerClientEvent('ox_lib:notify', src, { title = 'You didn\'t get anything!', type = 'error', duration = 3000 })
+                TriggerClientEvent('RSGCore:Notify', src, "You didn't get anything!", 'error')
             end
         elseif mineType == 'gems' then
             if chance <= Config.GemsChance then
@@ -165,7 +161,7 @@ if Config.Framework == 'RSG' then
                     TriggerClientEvent('inventory:client:ItemBox', src, itemInfo, 'add')
                 end
             else
-                TriggerClientEvent('ox_lib:notify', src, { title = 'You didn\'t get anything!', type = 'error', duration = 3000 })
+                TriggerClientEvent('RSGCore:Notify', src, "You didn't get anything!", 'error')
             end
         elseif mineType == 'gold' then
             if chance <= Config.GoldChance then
@@ -178,7 +174,7 @@ if Config.Framework == 'RSG' then
                     TriggerClientEvent('inventory:client:ItemBox', src, itemInfo, 'add')
                 end
             else
-                TriggerClientEvent('ox_lib:notify', src, { title = 'You didn\'t get anything!', type = 'error', duration = 3000 })
+                TriggerClientEvent('RSGCore:Notify', src, "You didn't get anything!", 'error')
             end
         end
 
