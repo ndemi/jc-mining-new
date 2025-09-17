@@ -49,6 +49,48 @@ Config.IceDrill = {
     brokenMessage = 'The drill has been depleted and needs repairs.' -- Message shown when the drill breaks
 }
 
+Config.IceFields = {
+    {
+        label = 'Lake Isabella Ice Field', -- Visible blip label
+        id = 'lake_isabella_ice', -- Unique Identifier
+        blip = vector3(-528.94, 410.12, 86.74), -- Blip location
+        showBlip = true, -- Toggle visibility of the blip on the map
+        type = 'ice', -- Informational only
+        drillOnly = true, -- Only drilling is allowed inside this zone
+        coords = {
+            vector2(-541.22, 424.57),
+            vector2(-530.14, 437.02),
+            vector2(-512.48, 438.45),
+            vector2(-498.53, 426.89),
+            vector2(-494.17, 407.53),
+            vector2(-506.64, 393.11),
+            vector2(-524.93, 389.24),
+            vector2(-539.85, 401.87)
+        },
+        minZ = 82,
+        maxZ = 92,
+    },
+    {
+        label = 'Spider Gorge Ice Shelf',
+        id = 'spider_gorge_ice',
+        blip = vector3(-1766.58, 1283.47, 246.82),
+        showBlip = false,
+        type = 'ice',
+        drillOnly = true,
+        coords = {
+            vector2(-1784.61, 1294.37),
+            vector2(-1768.21, 1306.52),
+            vector2(-1748.92, 1300.84),
+            vector2(-1741.63, 1281.63),
+            vector2(-1749.16, 1264.37),
+            vector2(-1766.24, 1258.41),
+            vector2(-1781.47, 1269.15)
+        },
+        minZ = 242,
+        maxZ = 254,
+    },
+}
+
 Config.Mines = {
     {
         label = 'Grizzlies Mine', -- This is strictly a blip name for visible mines! Can be named anything ;)

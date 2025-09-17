@@ -1,6 +1,10 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 local activeMineZones = 0
+local activeIceZones = 0
+local activeDrillOnlyZones = 0
 local isInsideMine = false
+local isInsideIceField = false
+local isInsideDrillOnlyZone = false
 local isWorking = false
 local drillTargetId
 local washingCountdownActive = false
@@ -56,18 +60,18 @@ local function stopWashingCountdown()
 end
 
 Citizen.CreateThread(function()
-    for _, mines in pairs(Config.Mines) do
-        if mines.showBlip then
-            local MiningBlip = Citizen.InvokeNative(0x554D9D53F696D002, 1664425300, mines.blip)
+    for _, mine in pairs(Config.Mines) do
+        if mine.showBlip and mine.blip then
+            local MiningBlip = Citizen.InvokeNative(0x554D9D53F696D002, 1664425300, mine.blip)
             SetBlipSprite(MiningBlip, 1220803671)
             SetBlipScale(MiningBlip)
-            Citizen.InvokeNative(0x9CB1A1623062F402, MiningBlip, mines.label)
+            Citizen.InvokeNative(0x9CB1A1623062F402, MiningBlip, mine.label)
         end
 
-        local mineZone = PolyZone:Create(mines.coords, {
-            name = mines.id,
-            minZ = mines.minZ,
-            maxZ = mines.maxZ,
+        local mineZone = PolyZone:Create(mine.coords, {
+            name = mine.id,
+            minZ = mine.minZ,
+            maxZ = mine.maxZ,
             debugPoly = false,
         })
 
@@ -79,6 +83,49 @@ Citizen.CreateThread(function()
             end
 
             isInsideMine = activeMineZones > 0
+        end)
+    end
+end)
+
+Citizen.CreateThread(function()
+    if not Config.IceFields then
+        return
+    end
+
+    for _, fieldData in pairs(Config.IceFields) do
+        if fieldData.showBlip and fieldData.blip then
+            local IceBlip = Citizen.InvokeNative(0x554D9D53F696D002, 1664425300, fieldData.blip)
+            SetBlipSprite(IceBlip, 1220803671)
+            SetBlipScale(IceBlip)
+            Citizen.InvokeNative(0x9CB1A1623062F402, IceBlip, fieldData.label)
+        end
+
+        local zone = PolyZone:Create(fieldData.coords, {
+            name = fieldData.id,
+            minZ = fieldData.minZ,
+            maxZ = fieldData.maxZ,
+            debugPoly = false,
+        })
+
+        local drillOnly = fieldData.drillOnly
+
+        zone:onPlayerInOut(function(isInside)
+            if isInside then
+                activeIceZones = activeIceZones + 1
+
+                if drillOnly then
+                    activeDrillOnlyZones = activeDrillOnlyZones + 1
+                end
+            else
+                activeIceZones = math.max(0, activeIceZones - 1)
+
+                if drillOnly then
+                    activeDrillOnlyZones = math.max(0, activeDrillOnlyZones - 1)
+                end
+            end
+
+            isInsideIceField = activeIceZones > 0
+            isInsideDrillOnlyZone = activeDrillOnlyZones > 0
         end)
     end
 end)
@@ -119,6 +166,11 @@ Citizen.CreateThread(function()
 end)
 
 RegisterNetEvent('jc-mining:client:StartMining', function()
+    if isInsideDrillOnlyZone then
+        lib.notify({ title = 'You can only drill for ice in this area!', type = 'error', duration = 3000 })
+        return
+    end
+
     if not isInsideMine then
         lib.notify({ title = 'You\'re not inside a mine!', type = 'error', duration = 3000 })
         return
@@ -163,6 +215,16 @@ RegisterNetEvent('jc-mining:client:StartIceDrilling', function(entity)
 
     if not Config.IceDrill or not Config.IceDrill.enabled then
         lib.notify({ title = 'Ice drilling is not available.', type = 'error', duration = 3000 })
+        return
+    end
+
+    if isInsideMine then
+        lib.notify({ title = 'You cannot drill for ice while inside a mine.', type = 'error', duration = 3000 })
+        return
+    end
+
+    if not isInsideIceField then
+        lib.notify({ title = 'You need to be at an ice field to drill.', type = 'error', duration = 3000 })
         return
     end
 
