@@ -1,53 +1,52 @@
 Config = Config or {}
 
-Config.Framework = 'VORP' -- RSG or VORP
-
-Config.CommonChance = 80 -- Percentage of chance to get common items
-Config.GoldChance = 65 -- Percentage of chance to get Gold items
-Config.RareChance = 50 -- Percentage of chance to get Rare items
-Config.GemsChance = 35 -- Percentage of chance to get Gems items
-
 Config.Pickaxe = 'pickaxe' -- Pickaxe item name in the inventory
 Config.PickaxeProp = 'p_pickaxe01x' -- Pickaxe world prop that will be attached to the player
-Config.PickaxeDurability = 40 -- How many successful mining attempts a pickaxe can perform before breaking (set to 0 to disable)
+Config.PickaxeDurability = 100 -- How many successful mining attempts a pickaxe can perform before breaking (set to 0 to disable)
+Config.PickaxeDurabilityLoss = 1 -- Durability removed after every mining hit
 Config.PickaxeReplacementItem = 'broken_pickaxe' -- Item that will replace the pickaxe when it breaks (set to false/nil to disable)
 Config.PickaxeBrokenMessage = 'Your pickaxe broke!' -- Notification text when the pickaxe breaks
+
+Config.RockItem = 'rock' -- Base mining reward
+Config.RockRewardAmount = { min = 1, max = 3 } -- Amount of rocks rewarded per successful hit
+
+Config.ShinyOre = {
+    item = 'shinyore',
+    chancePerHit = 20, -- One in X chance to find a dirty shiny ore while mining (set to 0 to disable)
+    metadata = nil, -- Optional metadata table to attach to the item when rewarded
+    foundMessage = 'You have uncovered a dirty stone!'
+}
+
+Config.Washing = {
+    item = 'shinyore', -- Item that can be washed when using water
+    duration = 7000, -- Duration in milliseconds for washing a shiny ore
+    countdownLabel = 'Mycie kamienia: %ds', -- Text UI countdown while washing
+    gems = {
+        { item = 'diamond', chance = 5 },
+        { item = 'ruby', chance = 10 },
+        { item = 'emerald', chance = 10 },
+        { item = 'sapphire', chance = 10 },
+        { item = 'opal', chance = 15 },
+        { item = 'topaz', chance = 15 },
+        { item = 'garnet', chance = 10 },
+        { item = 'amethyst', chance = 10 },
+        { item = 'jade', chance = 10 },
+        { item = 'pearl', chance = 5 },
+    }
+}
 
 Config.IceDrill = {
     enabled = true, -- Toggle the ice drilling feature
     prop = 'p_drillpress01x', -- Prop that represents the drill press in the world
-    interactionDistance = 2.0, -- Distance required to interact with the drill
-    control = 0xCEFD9220, -- Default control (E) used to start drilling
-    prompt = 'Press [E] to drill for ice', -- Text UI prompt shown to players
+    targetIcon = 'fa-solid fa-icicles', -- Icon used by ox_target when interacting with the drill
+    prompt = 'Rozpocznij wiercenie lodu', -- Label used by ox_target
+    soundName = 'ice_drill', -- interact-sound clip played while drilling
     duration = 7000, -- Duration in milliseconds for a drilling cycle
     rewardItem = 'ice', -- Item that will be rewarded after drilling
     rewardAmount = { min = 1, max = 3 }, -- Amount of ice rewarded per cycle
-    durability = 30, -- How many times the drill can be used before breaking (set to 0 for infinite)
+    durability = 100, -- How many times the drill can be used before breaking (set to 0 for infinite)
+    durabilityLoss = 3, -- Durability removed every time the drill is used
     brokenMessage = 'The drill has been depleted and needs repairs.' -- Message shown when the drill breaks
-}
-
-Config.CommonItems = 'rock' -- The ordinary item you get from common mines!
-Config.GoldItems = 'gold_ore' -- Ordinary items you get from gold mines!
-Config.RareItems = { -- Items you get from rare mines
-    'diamondore',
-    'rubyore',
-    'silver_ore',
-    'gold_ore',
-    'coal',
-}
-Config.GemItems = { -- Items you get from gem mines
-    'diamondore',
-    'rubyore',
-    'emeraldore',
-    'coal',
-}
-Config.WashingItems = { -- Items you can get from washing rocks
-    'ironore',
-    'aluminum_ore',
-    'copper_ore',
-    'silver_ore',
-    'rocksalt',
-    'coal',
 }
 
 Config.Mines = {
@@ -56,7 +55,7 @@ Config.Mines = {
         id = 'grizzlies_mine', -- Unique Identifier
         blip = vector3(-1404.55, 1156.1407, 226.03324), -- The location of the blip
         showBlip = true, -- Whether the mine should be hidden or visible, true for visible false for hidden.
-        type = 'common', -- What kind of reward to get commonm = Config.CommonItems / rare = Config.RareItems / gold = Config.GoldItems / gems = Config.GemItems
+        type = 'common', -- Informational only (all mines use the rock + shiny ore reward table)
         coords = { -- Vector2 Polyzone coords 
             vector2(-1406.463256836, 1161.1862792968),
             vector2(-1419.1979980468, 1173.1785888672),

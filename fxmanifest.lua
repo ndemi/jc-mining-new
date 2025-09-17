@@ -14,12 +14,11 @@ server_scripts {
 
 client_scripts {
     '@PolyZone/client.lua',
-	'@PolyZone/BoxZone.lua',
-	'@PolyZone/EntityZone.lua',
-	'@PolyZone/CircleZone.lua',
-	'@PolyZone/ComboZone.lua',
-    'client/rsg_main.lua',
-    'client/vorp_main.lua'
+        '@PolyZone/BoxZone.lua',
+        '@PolyZone/EntityZone.lua',
+        '@PolyZone/CircleZone.lua',
+        '@PolyZone/ComboZone.lua',
+    'client/rsg_main.lua'
 }
 
 --ui_page 'html/index.html'

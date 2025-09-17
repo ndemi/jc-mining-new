@@ -1,259 +1,330 @@
-if Config.Framework == 'RSG' then
-    local RSGCore = exports['rsg-core']:GetCoreObject()
-    local mineType = nil
-    local isWorking = false
-    local drillPromptVisible = false
+local RSGCore = exports['rsg-core']:GetCoreObject()
+local activeMineZones = 0
+local isInsideMine = false
+local isWorking = false
+local drillTargetId
+local washingCountdownActive = false
 
-    local function showDrillPrompt()
-        if drillPromptVisible or not Config.IceDrill or not Config.IceDrill.enabled then
-            return
-        end
-
-        if lib and lib.showTextUI then
-            lib.showTextUI(Config.IceDrill.prompt or 'Press [E] to drill for ice')
-        end
-
-        drillPromptVisible = true
+local function startWashingCountdown(duration)
+    if not lib or not lib.showTextUI then
+        return
     end
 
-    local function hideDrillPrompt()
-        if not drillPromptVisible then
-            return
-        end
+    local labelTemplate = (Config.Washing and Config.Washing.countdownLabel) or 'Pozostały czas: %ds'
+    local totalSeconds = math.max(1, math.floor(duration / 1000))
+    washingCountdownActive = true
 
-        if lib and lib.hideTextUI then
-            lib.hideTextUI()
-        end
+    CreateThread(function()
+        lib.showTextUI(labelTemplate:format(totalSeconds))
 
-        drillPromptVisible = false
-    end
-    
-    Citizen.CreateThread(function()
-        for _, mines in pairs(Config.Mines) do
-            if mines.showBlip then
-                local MiningBlip = Citizen.InvokeNative(0x554D9D53F696D002, 1664425300, mines.blip)
-                SetBlipSprite(MiningBlip, 1220803671)
-                SetBlipScale(MiningBlip)
-                Citizen.InvokeNative(0x9CB1A1623062F402, MiningBlip, mines.label)
+        for remaining = totalSeconds - 1, 0, -1 do
+            if not washingCountdownActive then
+                break
             end
 
-            local mineZone = PolyZone:Create(mines.coords, {
-                name = mines.id,
-                minZ = mines.minZ,
-                maxZ = mines.maxZ,
-                debugPoly = false,
-            })
+            Wait(1000)
 
-            mineZone:onPlayerInOut(function(onInsideOut)
-                if onInsideOut then
-                    mineType = mines.type
+            if not washingCountdownActive then
+                break
+            end
+
+            if remaining > 0 then
+                if lib.updateTextUI then
+                    lib.updateTextUI(labelTemplate:format(remaining))
                 else
-                    mineType = nil
-                end
-            end)
-        end
-    end)
-
-    if Config.IceDrill and Config.IceDrill.enabled then
-        Citizen.CreateThread(function()
-            local drillHash = GetHashKey(Config.IceDrill.prop)
-            local distance = Config.IceDrill.interactionDistance or 2.0
-            local control = Config.IceDrill.control or 0xCEFD9220
-
-            while true do
-                local sleep = 500
-
-                if not isWorking then
-                    local ped = PlayerPedId()
-                    local coords = GetEntityCoords(ped)
-                    local drill = GetClosestObjectOfType(coords.x, coords.y, coords.z, distance, drillHash, false, false, false)
-
-                    if drill ~= 0 then
-                        sleep = 0
-                        showDrillPrompt()
-
-                        if IsControlJustReleased(0, control) then
-                            TriggerEvent('jc-mining:client:StartIceDrilling')
-                            Wait(250)
-                        end
-                    else
-                        hideDrillPrompt()
-                    end
-                else
-                    hideDrillPrompt()
-                end
-
-                Wait(sleep)
-            end
-        end)
-    end
-    
-    RegisterNetEvent('jc-mining:client:StartMining', function()
-        if not mineType then
-            lib.notify({ title = 'You\'re not inside a mine!', type = 'error', duration = 3000 })
-            return
-        end
-
-        if isWorking then
-            lib.notify({ title = 'You\'re already doing something!', type = 'error', duration = 3000 })
-            return
-        end
-
-        local coords = GetEntityCoords(PlayerPedId())
-        local boneIndex = GetEntityBoneIndexByName(PlayerPedId(), "SKEL_R_Finger00")
-        local pickaxeModel = Config.PickaxeProp or 'p_pickaxe01x'
-        local pickaxe = CreateObject(GetHashKey(pickaxeModel), coords, true, true, true)
-        isWorking = true
-
-        SetCurrentPedWeapon(PlayerPedId(), "WEAPON_UNARMED", true)
-        ClearPedTasksImmediately(PlayerPedId())
-        AttachEntityToEntity(pickaxe, PlayerPedId(), boneIndex, -0.35, -0.21, -0.39, -8.0, 47.0, 11.0, true, false, true, false, 0, true)
-        RequestAnimDict('amb_work@world_human_pickaxe@wall@male_d@base')
-
-        while not HasAnimDictLoaded('amb_work@world_human_pickaxe@wall@male_d@base') do
-            Wait(10)
-        end
-
-        TaskPlayAnim(PlayerPedId(), 'amb_work@world_human_pickaxe@wall@male_d@base', 'base', 3.0, 3.0, -1, 1, 0, false, false, false)
-        Wait(10000)
-        ClearPedTasksImmediately(PlayerPedId())
-        TriggerServerEvent('jc-mining:server:giveitems', mineType)
-        SetEntityAsNoLongerNeeded(pickaxe)
-        DeleteEntity(pickaxe)
-        DeleteObject(pickaxe)
-        isWorking = false
-    end)
-    
-    RegisterNetEvent('jc-mining:client:StartIceDrilling', function()
-        if isWorking then
-            lib.notify({ title = 'You\'re already doing something!', type = 'error', duration = 3000 })
-            return
-        end
-
-        if not Config.IceDrill or not Config.IceDrill.enabled then
-            lib.notify({ title = 'Ice drilling is not available.', type = 'error', duration = 3000 })
-            return
-        end
-
-        local ped = PlayerPedId()
-        local coords = GetEntityCoords(ped)
-        local drill = GetClosestObjectOfType(coords.x, coords.y, coords.z, Config.IceDrill.interactionDistance or 2.0, GetHashKey(Config.IceDrill.prop), false, false, false)
-
-        if drill == 0 then
-            lib.notify({ title = 'You need to be near a drill.', type = 'error', duration = 3000 })
-            return
-        end
-
-        isWorking = true
-        hideDrillPrompt()
-
-        RequestAnimDict('amb_work@world_human_pickaxe@wall@male_d@base')
-        while not HasAnimDictLoaded('amb_work@world_human_pickaxe@wall@male_d@base') do
-            Wait(10)
-        end
-
-        TaskPlayAnim(ped, 'amb_work@world_human_pickaxe@wall@male_d@base', 'base', 3.0, 3.0, -1, 1, 0, false, false, false)
-
-        local duration = Config.IceDrill.duration or 7000
-        local drillNet = NetworkGetNetworkIdFromEntity(drill)
-
-        if lib.progressBar({
-            duration = duration,
-            position = 'bottom',
-            useWhileDead = false,
-            canCancel = false,
-            disable = {
-                move = true,
-                mouse = false,
-                combat = true,
-                car = true
-            },
-            label = 'Drilling ice',
-            anim = {
-                dict = 'amb_work@world_human_pickaxe@wall@male_d@base',
-                clip = 'base'
-            }
-        }) then
-            ClearPedTasks(ped)
-            TriggerServerEvent('jc-mining:server:DrillIce', drillNet)
-            isWorking = false
-        else
-            ClearPedTasks(ped)
-            isWorking = false
-        end
-    end)
-
-    RegisterNetEvent('jc-mining:client:IceDrillFailed', function(message)
-        isWorking = false
-        hideDrillPrompt()
-        lib.notify({ title = message or 'The drill is not operational.', type = 'error', duration = 3000 })
-    end)
-
-    RegisterNetEvent('jc-mining:client:IceDrillDepleted', function(netId)
-        local entity = NetworkGetEntityFromNetworkId(netId)
-
-        if entity and entity ~= 0 and DoesEntityExist(entity) then
-            if not NetworkHasControlOfEntity(entity) then
-                NetworkRequestControlOfEntity(entity)
-                local startTime = GetGameTimer()
-
-                while not NetworkHasControlOfEntity(entity) and GetGameTimer() - startTime < 2000 do
-                    Wait(50)
-                    NetworkRequestControlOfEntity(entity)
-                end
-            end
-
-            if NetworkHasControlOfEntity(entity) then
-                DeleteObject(entity)
-            end
-        end
-    end)
-    
-    RegisterNetEvent('jc-mining:client:StartWashing', function()
-        if not isWorking then
-            isWorking = true
-            local x,y,z =  table.unpack(GetEntityCoords(PlayerPedId()))
-            local current_district = Citizen.InvokeNative(0x43AD8FC02B429D33, x, y, z, 3)
-            if current_district then
-                if not IsEntityInWater(PlayerPedId()) then 
-                    lib.notify({ title = 'You\'re not in any river!', type = 'error', duration = 3000 })
-                    working = false;
-                    return 
-                end         
-                if lib.progressBar({
-                    duration = 5000,
-                    position = 'bottom',
-                    useWhileDead = false,
-                    canCancel = false,
-                    disable = {
-                        move = true,
-                        mouse = false,
-                        combat = true,
-                        car = true
-                    },
-                    anim = {
-                        dict = 'script_rc@cldn@ig@rsc2_ig1_questionshopkeeper',
-                        clip = 'inspectfloor_player'
-                    },
-                    label = 'Washing Rocks',
-                }) then 
-                    ClearPedTasks(PlayerPedId())
-                    TriggerServerEvent('jc-mining:server:washStones')
-                    isWorking = false
+                    lib.showTextUI(labelTemplate:format(remaining))
                 end
             else
-                lib.notify({ title = 'You\'re not at any river!', type = 'error', duration = 3000 })
+                if lib.hideTextUI then
+                    lib.hideTextUI()
+                end
             end
-        else
-            lib.notify({ title = 'You\'re already doing something!', type = 'error', duration = 3000 })
-        end
-    end)
-
-    AddEventHandler('onResourceStop', function(resource)
-        if resource ~= GetCurrentResourceName() then
-            return
         end
 
-        hideDrillPrompt()
+        if washingCountdownActive and lib and lib.hideTextUI then
+            lib.hideTextUI()
+        end
     end)
 end
+
+local function stopWashingCountdown()
+    washingCountdownActive = false
+
+    if lib and lib.hideTextUI then
+        lib.hideTextUI()
+    end
+end
+
+Citizen.CreateThread(function()
+    for _, mines in pairs(Config.Mines) do
+        if mines.showBlip then
+            local MiningBlip = Citizen.InvokeNative(0x554D9D53F696D002, 1664425300, mines.blip)
+            SetBlipSprite(MiningBlip, 1220803671)
+            SetBlipScale(MiningBlip)
+            Citizen.InvokeNative(0x9CB1A1623062F402, MiningBlip, mines.label)
+        end
+
+        local mineZone = PolyZone:Create(mines.coords, {
+            name = mines.id,
+            minZ = mines.minZ,
+            maxZ = mines.maxZ,
+            debugPoly = false,
+        })
+
+        mineZone:onPlayerInOut(function(isInside)
+            if isInside then
+                activeMineZones = activeMineZones + 1
+            else
+                activeMineZones = math.max(0, activeMineZones - 1)
+            end
+
+            isInsideMine = activeMineZones > 0
+        end)
+    end
+end)
+
+Citizen.CreateThread(function()
+    if not Config.IceDrill or not Config.IceDrill.enabled then
+        return
+    end
+
+    if GetResourceState('ox_target') ~= 'started' then
+        print('[jc-mining] ox_target is required for drill interactions.')
+        return
+    end
+
+    local models = Config.IceDrill.prop
+
+    if type(models) ~= 'table' then
+        models = { models }
+    end
+
+    drillTargetId = exports['ox_target']:addModel(models, {
+        {
+            name = 'jc-mining:drill',
+            icon = Config.IceDrill.targetIcon or 'fa-solid fa-icicles',
+            label = Config.IceDrill.prompt or 'Drill for ice',
+            onSelect = function(data)
+                if isWorking then
+                    return
+                end
+
+                TriggerEvent('jc-mining:client:StartIceDrilling', data and data.entity or 0)
+            end,
+            canInteract = function()
+                return not isWorking
+            end
+        }
+    })
+end)
+
+RegisterNetEvent('jc-mining:client:StartMining', function()
+    if not isInsideMine then
+        lib.notify({ title = 'You\'re not inside a mine!', type = 'error', duration = 3000 })
+        return
+    end
+
+    if isWorking then
+        lib.notify({ title = 'You\'re already doing something!', type = 'error', duration = 3000 })
+        return
+    end
+
+    local ped = PlayerPedId()
+    local coords = GetEntityCoords(ped)
+    local boneIndex = GetEntityBoneIndexByName(ped, 'SKEL_R_Finger00')
+    local pickaxeModel = Config.PickaxeProp or 'p_pickaxe01x'
+    local pickaxe = CreateObject(GetHashKey(pickaxeModel), coords, true, true, true)
+    isWorking = true
+
+    SetCurrentPedWeapon(ped, 'WEAPON_UNARMED', true)
+    ClearPedTasksImmediately(ped)
+    AttachEntityToEntity(pickaxe, ped, boneIndex, -0.35, -0.21, -0.39, -8.0, 47.0, 11.0, true, false, true, false, 0, true)
+    RequestAnimDict('amb_work@world_human_pickaxe@wall@male_d@base')
+
+    while not HasAnimDictLoaded('amb_work@world_human_pickaxe@wall@male_d@base') do
+        Wait(10)
+    end
+
+    TaskPlayAnim(ped, 'amb_work@world_human_pickaxe@wall@male_d@base', 'base', 3.0, 3.0, -1, 1, 0, false, false, false)
+    Wait(10000)
+    ClearPedTasksImmediately(ped)
+    TriggerServerEvent('jc-mining:server:giveitems')
+    SetEntityAsNoLongerNeeded(pickaxe)
+    DeleteEntity(pickaxe)
+    DeleteObject(pickaxe)
+    isWorking = false
+end)
+
+RegisterNetEvent('jc-mining:client:StartIceDrilling', function(entity)
+    if isWorking then
+        lib.notify({ title = 'You\'re already doing something!', type = 'error', duration = 3000 })
+        return
+    end
+
+    if not Config.IceDrill or not Config.IceDrill.enabled then
+        lib.notify({ title = 'Ice drilling is not available.', type = 'error', duration = 3000 })
+        return
+    end
+
+    local ped = PlayerPedId()
+    local drillEntity = entity or 0
+
+    if not drillEntity or drillEntity == 0 then
+        local coords = GetEntityCoords(ped)
+        drillEntity = GetClosestObjectOfType(coords.x, coords.y, coords.z, 2.5, GetHashKey(Config.IceDrill.prop), false, false, false)
+    end
+
+    if not drillEntity or drillEntity == 0 then
+        lib.notify({ title = 'You need to be near a drill.', type = 'error', duration = 3000 })
+        return
+    end
+
+    isWorking = true
+
+    RequestAnimDict('amb_work@world_human_pickaxe@wall@male_d@base')
+
+    while not HasAnimDictLoaded('amb_work@world_human_pickaxe@wall@male_d@base') do
+        Wait(10)
+    end
+
+    TaskPlayAnim(ped, 'amb_work@world_human_pickaxe@wall@male_d@base', 'base', 3.0, 3.0, -1, 1, 0, false, false, false)
+
+    local duration = Config.IceDrill.duration or 7000
+    local drillNet = NetworkGetNetworkIdFromEntity(drillEntity)
+
+    if Config.IceDrill.soundName then
+        TriggerEvent('InteractSound_CL:PlayOnOne', Config.IceDrill.soundName, Config.IceDrill.soundVolume or 0.5)
+    end
+
+    local success = lib.progressBar({
+        duration = duration,
+        position = 'bottom',
+        useWhileDead = false,
+        canCancel = false,
+        disable = {
+            move = true,
+            mouse = false,
+            combat = true,
+            car = true
+        },
+        label = Config.IceDrill.prompt or 'Drilling ice',
+        anim = {
+            dict = 'amb_work@world_human_pickaxe@wall@male_d@base',
+            clip = 'base'
+        }
+    })
+
+    if Config.IceDrill.soundName then
+        TriggerEvent('InteractSound_CL:StopSound', Config.IceDrill.soundName)
+    end
+
+    ClearPedTasks(ped)
+
+    if success then
+        TriggerServerEvent('jc-mining:server:DrillIce', drillNet)
+    end
+
+    isWorking = false
+end)
+
+RegisterNetEvent('jc-mining:client:IceDrillFailed', function(message)
+    isWorking = false
+
+    if Config.IceDrill and Config.IceDrill.soundName then
+        TriggerEvent('InteractSound_CL:StopSound', Config.IceDrill.soundName)
+    end
+
+    lib.notify({ title = message or 'The drill is not operational.', type = 'error', duration = 3000 })
+end)
+
+RegisterNetEvent('jc-mining:client:IceDrillDepleted', function(netId)
+    local entity = NetworkGetEntityFromNetworkId(netId)
+
+    if entity and entity ~= 0 and DoesEntityExist(entity) then
+        if not NetworkHasControlOfEntity(entity) then
+            NetworkRequestControlOfEntity(entity)
+            local startTime = GetGameTimer()
+
+            while not NetworkHasControlOfEntity(entity) and GetGameTimer() - startTime < 2000 do
+                Wait(50)
+                NetworkRequestControlOfEntity(entity)
+            end
+        end
+
+        if NetworkHasControlOfEntity(entity) then
+            DeleteObject(entity)
+        end
+    end
+end)
+
+RegisterNetEvent('jc-mining:client:StartWashing', function()
+    if isWorking then
+        lib.notify({ title = 'You\'re already doing something!', type = 'error', duration = 3000 })
+        return
+    end
+
+    if not Config.Washing or not Config.Washing.item then
+        lib.notify({ title = 'Washing is not configured.', type = 'error', duration = 3000 })
+        return
+    end
+
+    local ped = PlayerPedId()
+    local coords = GetEntityCoords(ped)
+    local currentDistrict = Citizen.InvokeNative(0x43AD8FC02B429D33, coords.x, coords.y, coords.z, 3)
+
+    if not currentDistrict or not IsEntityInWater(ped) then
+        lib.notify({ title = 'You\'re not in water!', type = 'error', duration = 3000 })
+        return
+    end
+
+    isWorking = true
+    RequestAnimDict('script_rc@cldn@ig@rsc2_ig1_questionshopkeeper')
+
+    while not HasAnimDictLoaded('script_rc@cldn@ig@rsc2_ig1_questionshopkeeper') do
+        Wait(10)
+    end
+
+    local duration = (Config.Washing and Config.Washing.duration) or 5000
+    startWashingCountdown(duration)
+
+    local success = lib.progressBar({
+        duration = duration,
+        position = 'bottom',
+        useWhileDead = false,
+        canCancel = false,
+        disable = {
+            move = true,
+            mouse = false,
+            combat = true,
+            car = true
+        },
+        anim = {
+            dict = 'script_rc@cldn@ig@rsc2_ig1_questionshopkeeper',
+            clip = 'inspectfloor_player'
+        },
+        label = 'Mycie zabrudzonego kamienia',
+    })
+
+    stopWashingCountdown()
+    ClearPedTasks(ped)
+
+    if success then
+        TriggerServerEvent('jc-mining:server:washShinyOre')
+    end
+
+    isWorking = false
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then
+        return
+    end
+
+    stopWashingCountdown()
+
+    if drillTargetId then
+        pcall(function()
+            exports['ox_target']:removeModel(drillTargetId)
+        end)
+    end
+end)
